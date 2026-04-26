@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { Routes, Route, Link } from "react-router-dom";
 import "./index.css";
 import { supabase } from "./supabase";
+import Privacy from "./Privacy";
+import Terms from "./Terms";
 
-export default function App() {
+function HomePage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -19,56 +22,57 @@ export default function App() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-async function handleSubmit(e) {
-  e.preventDefault();
-  setSaving(true);
-  setError("");
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
 
-  const { error: insertError } = await supabase.from("waitlist").insert({
-    name: form.name,
-    email: form.email,
-    role: form.role,
-    message: form.message || null,
-  });
-
-  if (insertError) {
-    setSaving(false);
-    setError(insertError.message);
-    return;
-  }
-
-const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/waitlist-notify`;
-  const notifyResponse = await fetch(functionUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-    },
-    body: JSON.stringify({
+    const { error: insertError } = await supabase.from("waitlist").insert({
       name: form.name,
       email: form.email,
       role: form.role,
-      message: form.message,
-    }),
-  });
+      message: form.message || null,
+    });
 
-  if (!notifyResponse.ok) {
-    const notifyError = await notifyResponse.text();
+    if (insertError) {
+      setSaving(false);
+      setError(insertError.message);
+      return;
+    }
+
+    const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/waitlist-notify`;
+
+    const notifyResponse = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        role: form.role,
+        message: form.message,
+      }),
+    });
+
+    if (!notifyResponse.ok) {
+      const notifyError = await notifyResponse.text();
+      setSaving(false);
+      setError(`Saved to waitlist, but email failed: ${notifyError}`);
+      return;
+    }
+
     setSaving(false);
-    setError(`Saved to waitlist, but email failed: ${notifyError}`);
-    return;
+    setSubmitted(true);
+    setForm({
+      name: "",
+      email: "",
+      role: "Founder",
+      message: "",
+    });
   }
-
-  setSaving(false);
-  setSubmitted(true);
-  setForm({
-    name: "",
-    email: "",
-    role: "Founder",
-    message: "",
-  });
-}
 
   return (
     <div className="site">
@@ -435,9 +439,8 @@ const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/waitlist-
         </div>
 
         <div className="footer-links">
-          <a href="#waitlist">Waitlist</a>
-          <a href="#">Privacy</a>
-          <a href="#">Terms</a>
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
         </div>
 
         <div>
@@ -446,5 +449,15 @@ const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/waitlist-
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+    </Routes>
   );
 }
