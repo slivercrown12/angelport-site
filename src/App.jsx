@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import "./index.css";
 import { supabase } from "./supabase";
 import Privacy from "./Privacy";
 import Terms from "./Terms";
+import Login from "./Login";
+import Signup from "./Signup";
+import Dashboard from "./Dashboard";
 
 function HomePage() {
   const [form, setForm] = useState({
@@ -16,10 +19,38 @@ function HomePage() {
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadSession() {
+      const { data } = await supabase.auth.getSession();
+      if (isMounted) {
+        setSession(data.session);
+      }
+    }
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   }
 
   async function handleSubmit(e) {
@@ -27,12 +58,14 @@ function HomePage() {
     setSaving(true);
     setError("");
 
-    const { error: insertError } = await supabase.from("waitlist").insert({
+    const payload = {
       name: form.name,
       email: form.email,
       role: form.role,
       message: form.message || null,
-    });
+    };
+
+    const { error: insertError } = await supabase.from("waitlist").insert(payload);
 
     if (insertError) {
       setSaving(false);
@@ -49,12 +82,7 @@ function HomePage() {
         apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({
-        name: form.name,
-        email: form.email,
-        role: form.role,
-        message: form.message,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!notifyResponse.ok) {
@@ -64,14 +92,50 @@ function HomePage() {
       return;
     }
 
-    setSaving(false);
     setSubmitted(true);
+    setSaving(false);
     setForm({
       name: "",
       email: "",
       role: "Founder",
       message: "",
     });
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    setSession(null);
+  }
+
+  function renderHeaderActions() {
+    return (
+      <div className="nav-cta-group">
+        <a href="#waitlist" className="secondary-btn nav-auth-btn">
+          Join Waitlist
+        </a>
+
+        {session ? (
+          <>
+            <Link to="/dashboard" className="primary-btn nav-auth-btn">
+              Dashboard
+            </Link>
+            <span className="signed-in-badge">{session.user.email}</span>
+            <button onClick={handleSignOut} className="secondary-btn nav-auth-btn">
+              Sign Out
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="secondary-btn nav-auth-btn">
+              Login
+            </Link>
+            <Link to="/signup" className="primary-btn nav-auth-btn">
+              Create Account
+            </Link>
+          </>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -91,7 +155,7 @@ function HomePage() {
           <a href="#contact">Contact</a>
         </nav>
 
-        <a href="#waitlist" className="primary-btn">Join Waitlist</a>
+        {renderHeaderActions()}
       </header>
 
       <section className="hero">
@@ -105,8 +169,12 @@ function HomePage() {
           </p>
 
           <div className="hero-actions">
-            <a href="#waitlist" className="primary-btn">Get Early Access</a>
-            <a href="#screens" className="secondary-btn">View Screens</a>
+            <a href="#waitlist" className="primary-btn">
+              Get Early Access
+            </a>
+            <a href="#screens" className="secondary-btn">
+              View Screens
+            </a>
           </div>
 
           <div className="stats">
@@ -190,6 +258,7 @@ function HomePage() {
               opportunity clearly.
             </p>
           </div>
+
           <div className="feature-card">
             <h4>Investor Messaging</h4>
             <p>
@@ -197,6 +266,7 @@ function HomePage() {
               outside workflows.
             </p>
           </div>
+
           <div className="feature-card">
             <h4>Comments & Discussion</h4>
             <p>
@@ -204,6 +274,7 @@ function HomePage() {
               decision-making.
             </p>
           </div>
+
           <div className="feature-card">
             <h4>Verification Flow</h4>
             <p>
@@ -228,6 +299,7 @@ function HomePage() {
               funding goals.
             </p>
           </div>
+
           <div className="step-card">
             <h4>2. Discover opportunities</h4>
             <p>
@@ -235,6 +307,7 @@ function HomePage() {
               modern feed.
             </p>
           </div>
+
           <div className="step-card">
             <h4>3. Start real conversations</h4>
             <p>
@@ -269,15 +342,21 @@ function HomePage() {
             <div className="mock-top">Discussion</div>
             <div className="mock-body">
               <div className="mock-comment">What are your customer acquisition costs?</div>
-              <div className="mock-comment accent">We can share detailed numbers in message.</div>
+              <div className="mock-comment accent">
+                We can share detailed numbers in message.
+              </div>
             </div>
           </div>
 
           <div className="screen-mock">
             <div className="mock-top">Messages</div>
             <div className="mock-body">
-              <div className="mock-message">Interested in learning more about your traction.</div>
-              <div className="mock-message accent">Happy to send over more detail.</div>
+              <div className="mock-message">
+                Interested in learning more about your traction.
+              </div>
+              <div className="mock-message accent">
+                Happy to send over more detail.
+              </div>
             </div>
           </div>
 
@@ -286,7 +365,9 @@ function HomePage() {
             <div className="mock-body">
               <div className="mock-avatar" />
               <div className="mock-title">Professional founder profile</div>
-              <div className="mock-text">Role, bio, and credibility signals in one place.</div>
+              <div className="mock-text">
+                Role, bio, and credibility signals in one place.
+              </div>
             </div>
           </div>
         </div>
@@ -427,8 +508,12 @@ function HomePage() {
           trustworthy, and more direct.
         </p>
         <div className="hero-actions center">
-          <a href="#waitlist" className="primary-btn">Request Early Access</a>
-          <a href="#contact" className="secondary-btn">Contact Us</a>
+          <a href="#waitlist" className="primary-btn">
+            Request Early Access
+          </a>
+          <a href="#contact" className="secondary-btn">
+            Contact Us
+          </a>
         </div>
       </section>
 
@@ -458,6 +543,9 @@ export default function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
 }
