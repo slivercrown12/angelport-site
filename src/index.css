@@ -1527,6 +1527,7 @@ button {
   text-align: left;
   color: white;
   cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .dashboard-stat-card:hover {
