@@ -64,6 +64,9 @@ export default function Login() {
               required
             />
           </div>
+          <Link to="/forgot-password" className="auth-link">
+  Forgot password?
+</Link>
 
           {message ? <p className="auth-message">{message}</p> : null}
 

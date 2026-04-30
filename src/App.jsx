@@ -7,7 +7,10 @@ import Terms from "./Terms";
 import Login from "./Login";
 import Signup from "./Signup";
 import Dashboard from "./Dashboard";
-
+import Discover from "./Discover";
+import PitchDetail from "./PitchDetail";
+import ForgotPassword from "./ForgotPassword";
+import UpdatePassword from "./UpdatePassword";
 function HomePage() {
   const [form, setForm] = useState({
     name: "",
@@ -149,6 +152,7 @@ function HomePage() {
         <nav className="nav">
           <a href="#features">Features</a>
           <a href="#how">How It Works</a>
+          <Link to="/discover">Discover</Link>  
           <a href="#screens">Screens</a>
           <a href="#audience">Audience</a>
           <a href="#waitlist">Waitlist</a>
@@ -546,6 +550,10 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/discover" element={<Discover />} />
+      <Route path="/pitch/:id" element={<PitchDetail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/update-password" element={<UpdatePassword />} />
     </Routes>
   );
 }

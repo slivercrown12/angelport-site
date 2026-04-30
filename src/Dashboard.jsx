@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [editingPitchId, setEditingPitchId] = useState(null);
   const [pitchSaving, setPitchSaving] = useState(false);
   const [pitchMessage, setPitchMessage] = useState("");
+  const [interests, setInterests] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -119,6 +120,40 @@ export default function Dashboard() {
     loadPitches();
   }, [session]);
 
+  useEffect(() => {
+  if (!session?.user) return;
+
+  async function loadInterests() {
+    const { data, error } = await supabase
+      .from("pitch_interests")
+      .select(
+        `
+        id,
+        pitch_id,
+        interested_email,
+        interested_name,
+        message,
+        created_at,
+        pitches (
+          startup_name,
+          industry
+        )
+      `
+      )
+      .eq("founder_id", session.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Interest load error:", error.message);
+      return;
+    }
+
+    setInterests(data || []);
+  }
+
+  loadInterests();
+}, [session]);
+
   const email = session?.user?.email || "No email";
 
   const fullName =
@@ -178,12 +213,15 @@ export default function Dashboard() {
           target: "Pitches",
         },
         {
-          icon: Mail,
-          label: "Unread Messages",
-          value: "00",
-          sub: "messages coming soon",
-          target: "Messages",
-        },
+  icon: Mail,
+  label: "Investor Interest",
+  value: String(interests.length).padStart(2, "0"),
+  sub:
+    interests.length === 1
+      ? "1 interested user"
+      : `${interests.length} interested users`,
+  target: "Messages",
+},
         {
           icon: Star,
           label: "Public Visibility",
@@ -242,12 +280,13 @@ export default function Dashboard() {
           publicPitches === 1 ? " is" : "es are"
         } marked public.`
       : "No public pitches yet.",
-    draftPitches > 0
-      ? `${draftPitches} draft pitch${
-          draftPitches === 1 ? "" : "es"
-        } waiting for review.`
-      : "No draft pitches waiting.",
-    `Your profile is ${profileCompletion}% complete.`,
+    interests.length > 0
+    ? `${interests.length} investor interest request${
+        interests.length === 1 ? "" : "s"
+      } received.`
+    : "No investor interest yet.",
+
+  `Your profile is ${profileCompletion}% complete.`,,
   ];
 
   async function handleSignOut() {
@@ -824,59 +863,96 @@ export default function Dashboard() {
       </section>
     );
   }
+function renderMessages() {
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Investor Interest</h3>
+          <span>{interests.length}</span>
+        </div>
 
-  function renderMessages() {
-    return (
-      <section className="dashboard-content-grid">
-        <div className="dashboard-panel large">
-          <div className="dashboard-panel-head">
-            <h3>Inbox</h3>
-            <span>Coming Soon</span>
-          </div>
-
+        {interests.length === 0 ? (
           <div className="activity-list">
             <div className="activity-item">
               <div className="activity-dot" />
               <div className="activity-text">
-                Messaging tools will connect founders and investors later.
+                No investor interest yet. Public pitches will appear in Discover.
               </div>
             </div>
 
             <div className="activity-item">
               <div className="activity-dot" />
               <div className="activity-text">
-                For now, pitch creation and profile tools are live.
+                When someone clicks Contact Founder, it will show here.
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-head">
-            <h3>Message Status</h3>
-            <span>Planned</span>
-          </div>
-
+        ) : (
           <div className="focus-list">
-            <div className="focus-row">
-              <strong>Unread</strong>
-              <span>0 active messages</span>
-            </div>
+            {interests.map((interest) => (
+              <div key={interest.id} className="focus-row pitch-list-item">
+                <div className="pitch-list-top">
+                  <strong>
+                    {interest.interested_name || "AngelPort User"}
+                  </strong>
 
-            <div className="focus-row">
-              <strong>Priority</strong>
-              <span>No message threads yet</span>
-            </div>
+                  <span className="pitch-status-badge">Interested</span>
+                </div>
 
-            <div className="focus-row">
-              <strong>Next Step</strong>
-              <span>Build message tables and conversation UI later</span>
-            </div>
+                <span>{interest.interested_email || "No email saved"}</span>
+
+                <span>
+                  Pitch: {interest.pitches?.startup_name || "Unknown pitch"}
+                </span>
+
+                <span>
+                  {interest.message ||
+                    "I am interested in learning more about this pitch."}
+                </span>
+
+                {interest.interested_email ? (
+                  <a
+                    className="secondary-btn pitch-edit-btn"
+                    href={`mailto:${interest.interested_email}?subject=AngelPort pitch follow-up&body=Hi ${
+                      interest.interested_name || "there"
+                    },%0D%0A%0D%0AThanks for your interest in my pitch on AngelPort.`}
+                  >
+                    Reply by Email
+                  </a>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Message Status</h3>
+          <span>Live</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Total Interest</strong>
+            <span>{interests.length}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Next Step</strong>
+            <span>Build direct messaging or email follow-up next.</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Source</strong>
+            <span>Contact Founder button</span>
           </div>
         </div>
-      </section>
-    );
-  }
+      </div>
+    </section>
+  );
+}
 
   function renderDeals() {
     return (

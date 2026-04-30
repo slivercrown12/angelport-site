@@ -137,7 +137,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 18px 36px;
+  padding: 18px 30px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(10px);
@@ -156,7 +156,7 @@ button {
 
 .nav {
   display: flex;
-  gap: 28px;
+  gap: 25px;
   color: rgba(255, 255, 255, 0.72);
   font-size: 0.95rem;
 }
@@ -178,8 +178,8 @@ button {
 .hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
-  gap: 44px;
-  max-width: 1300px;
+  gap: 35px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 72px 36px 60px;
   align-items: center;
@@ -348,7 +348,7 @@ button {
 }
 
 .message-box-accent {
-  margin-left: 26px;
+  margin-left: 25px;
   background: rgba(220, 38, 38, 0.18);
   border: 1px solid rgba(239, 68, 68, 0.18);
 }
@@ -358,7 +358,7 @@ button {
 .step-card,
 .audience-card,
 .screen-mock {
-  border-radius: 28px;
+  border-radius: 25px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -370,7 +370,7 @@ button {
 }
 
 .trust-card {
-  padding: 28px;
+  padding: 25px;
 }
 
 .trust-card span,
@@ -395,7 +395,7 @@ button {
 }
 
 .section {
-  max-width: 1300px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 90px 36px;
 }
@@ -409,7 +409,7 @@ button {
 
 .section-alt .section-head,
 .section-alt .grid {
-  max-width: 1300px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -429,7 +429,7 @@ button {
 .grid {
   display: grid;
   gap: 20px;
-  margin-top: 42px;
+  margin-top: 35px;
 }
 
 .grid.four {
@@ -447,7 +447,7 @@ button {
 .feature-card,
 .step-card,
 .audience-card {
-  padding: 28px;
+  padding: 25px;
 }
 
 .feature-card h4,
@@ -477,7 +477,7 @@ button {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-top: 42px;
+  margin-top: 35px;
 }
 
 .screen-mock {
@@ -594,7 +594,7 @@ button {
 }
 
 .cta {
-  max-width: 1300px;
+  max-width: 1200px;
   margin: 0 auto 80px;
   padding: 50px 36px;
   text-align: center;
@@ -623,7 +623,7 @@ button {
   padding: 28px 36px 42px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.55);
-  max-width: 1300px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -780,7 +780,7 @@ button {
   display: grid;
   grid-template-columns: 280px 1fr;
   background:
-    radial-gradient(circle at top right, rgba(220, 38, 38, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.12), transparent 30%),
     #070709;
   color: white;
 }
@@ -1078,7 +1078,7 @@ button {
   margin-top: 16px;
   align-self: flex-start;
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: 980px;
   background: rgba(239, 68, 68, 0.14);
   border: 1px solid rgba(239, 68, 68, 0.2);
   color: #fca5a5;
@@ -1534,4 +1534,369 @@ button {
   transform: translateY(-2px);
   border-color: rgba(239, 68, 68, 0.28);
   background: rgba(255, 255, 255, 0.055);
+}
+.discover-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.16), transparent 28%),
+    #070709;
+  color: white;
+}
+
+.discover-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 22px 36px;
+  background: rgba(0, 0, 0, 0.72);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  min-height: 88px;
+}
+
+.discover-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.discover-brand h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.discover-brand p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.discover-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.discover-main {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 64px 36px;
+}
+
+.discover-hero {
+  display: grid;
+  grid-template-columns: 1fr 0.85fr;
+  gap: 28px;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.discover-hero h2 {
+  margin: 0;
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.discover-hero p {
+  max-width: 760px;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.discover-search-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discover-search-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  flex-shrink: 0;
+}
+
+.discover-search-card input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: white;
+  font: inherit;
+}
+
+.discover-search-card input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.discover-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-bottom: 30px;
+}
+
+.discover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.discover-pitch-card,
+.discover-empty {
+  border-radius: 28px;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discover-pitch-card {
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.discover-card-top h3 {
+  margin: 14px 0 0;
+  font-size: 1.8rem;
+  letter-spacing: -0.02em;
+}
+
+.discover-card-top svg {
+  color: #fca5a5;
+}
+
+.discover-description {
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.75;
+}
+
+.discover-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.discover-meta span {
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.9rem;
+}
+
+.discover-traction {
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+.discover-traction strong {
+  color: white;
+}
+
+.discover-traction p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.7;
+}
+
+.discover-empty {
+  grid-column: 1 / -1;
+}
+
+.discover-empty h3 {
+  margin-top: 0;
+  font-size: 1.8rem;
+}
+
+.discover-empty p {
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.7;
+}
+
+@media (max-width: 1100px) {
+  .discover-hero,
+  .discover-summary-grid,
+  .discover-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .discover-topbar,
+  .discover-actions {
+    flex-wrap: wrap;
+  }
+
+  .discover-main {
+    padding: 40px 18px;
+  }
+
+  .discover-hero h2 {
+    font-size: 2.7rem;
+  }
+}
+.discover-main {
+  padding-top: 110px;
+}
+
+.discover-hero {
+  align-items: center;
+}
+
+.discover-hero .dashboard-pill {
+  margin-bottom: 18px;
+}
+
+.discover-summary-grid {
+  margin-top: 36px;
+}
+
+.discover-grid {
+  margin-top: 38px;
+}
+.pitch-detail-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top right, rgba(220, 38, 38, 0.16), transparent 28%),
+    #070709;
+  color: white;
+}
+
+.pitch-detail-shell {
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 110px 36px 64px;
+}
+
+.pitch-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.pitch-detail-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.pitch-detail-main-card,
+.pitch-detail-side-card {
+  border-radius: 32px;
+  padding: 34px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pitch-detail-main-card h1 {
+  margin: 18px 0 0;
+  font-size: clamp(3rem, 6vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.pitch-detail-description {
+  max-width: 850px;
+  margin-top: 22px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 1.12rem;
+  line-height: 1.8;
+}
+
+.pitch-detail-meta {
+  margin-top: 24px;
+}
+
+.pitch-detail-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+
+.pitch-detail-note {
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.pitch-detail-muted {
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.7;
+}
+
+.pitch-detail-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 22px;
+  margin-top: 22px;
+}
+
+.pitch-detail-long-text {
+  color: rgba(255, 255, 255, 0.74);
+  line-height: 1.8;
+  font-size: 1.05rem;
+}
+
+.focus-row strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discover-detail-btn {
+  margin-top: 20px;
+  align-self: flex-start;
+}
+
+@media (max-width: 1000px) {
+  .pitch-detail-hero,
+  .pitch-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .pitch-detail-shell {
+    padding: 90px 18px 38px;
+  }
+
+  .pitch-detail-main-card,
+  .pitch-detail-side-card {
+    padding: 24px;
+  }
+
+  .pitch-detail-main-card h1 {
+    font-size: 2.6rem;
+  }
 }
