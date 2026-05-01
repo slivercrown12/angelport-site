@@ -1162,7 +1162,11 @@ function renderMessages() {
       <aside className={`dashboard-sidebar ${menuOpen ? "open" : "closed"}`}>
         <div className="sidebar-top">
           <div className="sidebar-brand">
-            <div className="sidebar-logo">A</div>
+            <img
+  src="/angelport-icon.png"
+  alt="AngelPort logo"
+  className="brand-logo-img"
+/>
             <div className="sidebar-brand-text">
               <h2>AngelPort</h2>
               <p>Workspace</p>
