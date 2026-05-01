@@ -126,20 +126,22 @@ export default function Dashboard() {
   async function loadInterests() {
     const { data, error } = await supabase
       .from("pitch_interests")
-      .select(
-        `
-        id,
-        pitch_id,
-        interested_email,
-        interested_name,
-        message,
-        created_at,
-        pitches (
-          startup_name,
-          industry
-        )
-      `
-      )
+.select(
+  `
+  id,
+  pitch_id,
+  interested_email,
+  interested_name,
+  message,
+  reviewed,
+  reviewed_at,
+  created_at,
+  pitches (
+    startup_name,
+    industry
+  )
+  `
+)
       .eq("founder_id", session.user.id)
       .order("created_at", { ascending: false });
 
@@ -188,6 +190,14 @@ export default function Dashboard() {
 
   const latestPitch = pitches[0];
 
+  const unreviewedInterests = interests.filter(
+  (interest) => !interest.reviewed
+).length;
+
+const reviewedInterests = interests.filter(
+  (interest) => interest.reviewed
+).length;
+
   const profileCompletionItems = [
     fullName && fullName !== "AngelPort User",
     email && email !== "No email",
@@ -212,14 +222,14 @@ export default function Dashboard() {
           }`,
           target: "Pitches",
         },
-        {
+{
   icon: Mail,
-  label: "Investor Interest",
-  value: String(interests.length).padStart(2, "0"),
+  label: "New Interest",
+  value: String(unreviewedInterests).padStart(2, "0"),
   sub:
-    interests.length === 1
-      ? "1 interested user"
-      : `${interests.length} interested users`,
+    unreviewedInterests === 1
+      ? "1 new request"
+      : `${unreviewedInterests} new requests`,
   target: "Messages",
 },
         {
@@ -280,10 +290,12 @@ export default function Dashboard() {
           publicPitches === 1 ? " is" : "es are"
         } marked public.`
       : "No public pitches yet.",
-    interests.length > 0
-    ? `${interests.length} investor interest request${
-        interests.length === 1 ? "" : "s"
-      } received.`
+   unreviewedInterests > 0
+  ? `${unreviewedInterests} new investor interest request${
+      unreviewedInterests === 1 ? "" : "s"
+    } waiting for review.`
+  : reviewedInterests > 0
+    ? "All investor interest has been reviewed."
     : "No investor interest yet.",
 
   `Your profile is ${profileCompletion}% complete.`,,
@@ -441,6 +453,37 @@ export default function Dashboard() {
 
     setPitchMessage("Pitch deleted.");
   }
+  async function handleMarkInterestReviewed(interestId) {
+  if (!session?.user) return;
+
+  const { data, error } = await supabase
+    .from("pitch_interests")
+    .update({
+      reviewed: true,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", interestId)
+    .eq("founder_id", session.user.id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Review update error:", error.message);
+    return;
+  }
+
+  setInterests((prev) =>
+    prev.map((interest) =>
+      interest.id === interestId
+        ? {
+            ...interest,
+            reviewed: data.reviewed,
+            reviewed_at: data.reviewed_at,
+          }
+        : interest
+    )
+  );
+}
 
   function renderOverview() {
     return (
@@ -897,7 +940,9 @@ function renderMessages() {
                     {interest.interested_name || "AngelPort User"}
                   </strong>
 
-                  <span className="pitch-status-badge">Interested</span>
+                  <span className="pitch-status-badge">
+                    {interest.reviewed ? "Reviewed" : "Interested"}
+                  </span>
                 </div>
 
                 <span>{interest.interested_email || "No email saved"}</span>
@@ -911,16 +956,32 @@ function renderMessages() {
                     "I am interested in learning more about this pitch."}
                 </span>
 
-                {interest.interested_email ? (
-                  <a
-                    className="secondary-btn pitch-edit-btn"
-                    href={`mailto:${interest.interested_email}?subject=AngelPort pitch follow-up&body=Hi ${
-                      interest.interested_name || "there"
-                    },%0D%0A%0D%0AThanks for your interest in my pitch on AngelPort.`}
-                  >
-                    Reply by Email
-                  </a>
-                ) : null}
+                <div className="pitch-actions">
+                  {interest.interested_email ? (
+                    <a
+                      className="secondary-btn pitch-edit-btn"
+                      href={`mailto:${
+                        interest.interested_email
+                      }?subject=AngelPort pitch follow-up&body=Hi ${
+                        interest.interested_name || "there"
+                      },%0D%0A%0D%0AThanks for your interest in my pitch on AngelPort.`}
+                    >
+                      Reply by Email
+                    </a>
+                  ) : null}
+
+                  {!interest.reviewed ? (
+                    <button
+                      type="button"
+                      className="secondary-btn pitch-edit-btn"
+                      onClick={() => handleMarkInterestReviewed(interest.id)}
+                    >
+                      Mark as Reviewed
+                    </button>
+                  ) : (
+                    <span>Reviewed by founder</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -934,6 +995,16 @@ function renderMessages() {
         </div>
 
         <div className="focus-list">
+          <div className="focus-row">
+            <strong>New Interest</strong>
+            <span>{unreviewedInterests}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Reviewed</strong>
+            <span>{reviewedInterests}</span>
+          </div>
+
           <div className="focus-row">
             <strong>Total Interest</strong>
             <span>{interests.length}</span>
