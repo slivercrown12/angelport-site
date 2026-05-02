@@ -16,6 +16,7 @@ export default function PitchDetail() {
   const [pitch, setPitch] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [founderProfile, setFounderProfile] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
@@ -30,12 +31,14 @@ export default function PitchDetail() {
     async function loadPitchAndUser() {
       setLoading(true);
       setErrorText("");
+      setFounderProfile(null);
+      setWatchlistItemId(null);
 
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user || null;
       setCurrentUser(user);
 
-      const { data, error } = await supabase
+      const { data: pitchData, error: pitchError } = await supabase
         .from("pitches")
         .select(
           "id, owner_id, startup_name, industry, short_description, funding_goal, traction, status, created_at"
@@ -44,35 +47,46 @@ export default function PitchDetail() {
         .eq("status", "public")
         .maybeSingle();
 
-      if (error) {
-        setErrorText(error.message);
+      if (pitchError) {
+        setErrorText(pitchError.message);
         setPitch(null);
         setLoading(false);
         return;
       }
 
-      setPitch(data);
-      if (data?.owner_id) {
-  const { data: profileData, error: profileError } = await supabase
-    .from("user_profiles")
-    .select("full_name, role, headline, bio, verification_status")
-    .eq("id", data.owner_id)
-    .maybeSingle();
+      if (!pitchData) {
+        setPitch(null);
+        setLoading(false);
+        return;
+      }
 
-  if (profileError) {
-    console.error("Founder profile load error:", profileError.message);
-  }
+      setPitch(pitchData);
 
-  setFounderProfile(profileData || null);
-}
+      if (pitchData.owner_id) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("user_profiles")
+          .select("full_name, role, headline, bio, verification_status")
+          .eq("id", pitchData.owner_id)
+          .maybeSingle();
 
-      if (user && data) {
-        const { data: watchlistData } = await supabase
+        if (profileError) {
+          console.error("Founder profile load error:", profileError.message);
+        }
+
+        setFounderProfile(profileData || null);
+      }
+
+      if (user) {
+        const { data: watchlistData, error: watchlistError } = await supabase
           .from("pitch_watchlist")
           .select("id")
-          .eq("pitch_id", data.id)
+          .eq("pitch_id", pitchData.id)
           .eq("user_id", user.id)
           .maybeSingle();
+
+        if (watchlistError) {
+          console.error("Watchlist load error:", watchlistError.message);
+        }
 
         setWatchlistItemId(watchlistData?.id || null);
       }
@@ -122,9 +136,9 @@ export default function PitchDetail() {
       message: "I am interested in learning more about this pitch.",
     });
 
-    if (error) {
-      setInterestSaving(false);
+    setInterestSaving(false);
 
+    if (error) {
       if (error.code === "23505") {
         setInterestMessage("You already expressed interest in this pitch.");
         return;
@@ -134,7 +148,6 @@ export default function PitchDetail() {
       return;
     }
 
-    setInterestSaving(false);
     setInterestMessage(
       "Interest sent. The founder will be able to see this later."
     );
@@ -172,14 +185,14 @@ export default function PitchDetail() {
         .eq("id", watchlistItemId)
         .eq("user_id", session.user.id);
 
+      setWatchlistSaving(false);
+
       if (error) {
-        setWatchlistSaving(false);
         setWatchlistMessage(error.message);
         return;
       }
 
       setWatchlistItemId(null);
-      setWatchlistSaving(false);
       setWatchlistMessage("Removed from watchlist.");
       return;
     }
@@ -193,9 +206,9 @@ export default function PitchDetail() {
       .select()
       .single();
 
-    if (error) {
-      setWatchlistSaving(false);
+    setWatchlistSaving(false);
 
+    if (error) {
       if (error.code === "23505") {
         setWatchlistMessage("This pitch is already in your watchlist.");
         return;
@@ -206,7 +219,6 @@ export default function PitchDetail() {
     }
 
     setWatchlistItemId(data.id);
-    setWatchlistSaving(false);
     setWatchlistMessage("Saved to watchlist.");
   }
 
@@ -256,6 +268,17 @@ export default function PitchDetail() {
 
   const isOwner = currentUser?.id === pitch.owner_id;
 
+  const founderStatus = founderProfile?.verification_status || "Not Verified";
+  const isVerifiedFounder = founderStatus === "Verified";
+
+  const founderName = founderProfile?.full_name || "AngelPort Founder";
+  const founderInitials = founderName
+    .split(" ")
+    .map((name) => name[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="pitch-detail-page">
       <header className="discover-topbar">
@@ -265,6 +288,7 @@ export default function PitchDetail() {
             alt="AngelPort logo"
             className="brand-logo-img"
           />
+
           <div>
             <h1>AngelPort</h1>
             <p>Pitch Detail</p>
@@ -275,6 +299,7 @@ export default function PitchDetail() {
           <Link to="/discover" className="secondary-btn">
             Discover
           </Link>
+
           <Link to="/dashboard" className="primary-btn">
             Dashboard
           </Link>
@@ -291,7 +316,20 @@ export default function PitchDetail() {
           <div className="pitch-detail-main-card">
             <div className="dashboard-pill">Public Pitch</div>
 
-            <h1>{pitch.startup_name}</h1>
+            <div className="pitch-title-row">
+              <h1>{pitch.startup_name}</h1>
+
+              {isVerifiedFounder ? (
+                <span className="verified-founder-badge">
+                  <BadgeCheck size={18} />
+                  Verified Founder
+                </span>
+              ) : (
+                <span className="unverified-founder-badge">
+                  {founderStatus}
+                </span>
+              )}
+            </div>
 
             <p className="pitch-detail-description">
               {pitch.short_description}
@@ -348,79 +386,82 @@ export default function PitchDetail() {
             )}
           </div>
 
-          <aside className="pitch-detail-side-card">
-            <div className="dashboard-panel-head">
-              <h3>Pitch Snapshot</h3>
-              <span>Live</span>
-            </div>
+          <div className="pitch-detail-side-stack">
+            <aside className="pitch-detail-side-card">
+              <div className="dashboard-panel-head">
+                <h3>Pitch Snapshot</h3>
+                <span>Live</span>
+              </div>
+
+              <div className="focus-list">
+                <div className="focus-row">
+                  <strong>Visibility</strong>
+                  <span>Public</span>
+                </div>
+
+                <div className="focus-row">
+                  <strong>Industry</strong>
+                  <span>{pitch.industry || "Not listed"}</span>
+                </div>
+
+                <div className="focus-row">
+                  <strong>Funding Goal</strong>
+                  <span>{pitch.funding_goal || "Not listed"}</span>
+                </div>
+
+                <div className="focus-row">
+                  <strong>Founder Trust</strong>
+                  <span>{founderStatus}</span>
+                </div>
+
+                <div className="focus-row">
+                  <strong>Watchlist</strong>
+                  <span>{watchlistItemId ? "Saved" : "Not saved"}</span>
+                </div>
+              </div>
+            </aside>
+
             <aside className="pitch-detail-founder-card">
-  <div className="dashboard-panel-head">
-    <h3>Founder Profile</h3>
-    <span>{founderProfile?.verification_status || "Not Verified"}</span>
-  </div>
-
-  <div className="founder-profile-box">
-    <div className="founder-profile-avatar">
-      {(founderProfile?.full_name || "AngelPort User")
-        .split(" ")
-        .map((name) => name[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()}
-    </div>
-
-    <div>
-      <h4>{founderProfile?.full_name || "AngelPort User"}</h4>
-      <p>{founderProfile?.role || "Founder"}</p>
-    </div>
-  </div>
-
-  <div className="focus-list">
-    <div className="focus-row">
-      <strong>Headline</strong>
-      <span>
-        {founderProfile?.headline ||
-          "Founder building and sharing startup opportunities on AngelPort."}
-      </span>
-    </div>
-
-    <div className="focus-row">
-      <strong>Bio</strong>
-      <span>
-        {founderProfile?.bio ||
-          "This founder has not added a public bio yet."}
-      </span>
-    </div>
-
-    <div className="focus-row">
-      <strong>Trust Status</strong>
-      <span>{founderProfile?.verification_status || "Not Verified"}</span>
-    </div>
-  </div>
-</aside>
-
-            <div className="focus-list">
-              <div className="focus-row">
-                <strong>Visibility</strong>
-                <span>Public</span>
+              <div className="dashboard-panel-head">
+                <h3>Founder Profile</h3>
+                <span>{founderStatus}</span>
               </div>
 
-              <div className="focus-row">
-                <strong>Industry</strong>
-                <span>{pitch.industry || "Not listed"}</span>
+              <div className="founder-profile-box">
+                <div className="founder-profile-avatar">
+                  {founderInitials}
+                </div>
+
+                <div>
+                  <h4>{founderName}</h4>
+                  <p>{founderProfile?.role || "Founder"}</p>
+                </div>
               </div>
 
-              <div className="focus-row">
-                <strong>Funding Goal</strong>
-                <span>{pitch.funding_goal || "Not listed"}</span>
-              </div>
+              <div className="focus-list">
+                <div className="focus-row">
+                  <strong>Headline</strong>
+                  <span>
+                    {founderProfile?.headline ||
+                      "Founder building and sharing startup opportunities on AngelPort."}
+                  </span>
+                </div>
 
-              <div className="focus-row">
-                <strong>Watchlist</strong>
-                <span>{watchlistItemId ? "Saved" : "Not saved"}</span>
+                <div className="focus-row">
+                  <strong>Bio</strong>
+                  <span>
+                    {founderProfile?.bio ||
+                      "This founder has not added a public bio yet."}
+                  </span>
+                </div>
+
+                <div className="focus-row">
+                  <strong>Trust Status</strong>
+                  <span>{founderStatus}</span>
+                </div>
               </div>
-            </div>
-          </aside>
+            </aside>
+          </div>
         </section>
 
         <section className="pitch-detail-grid">
@@ -460,7 +501,7 @@ export default function PitchDetail() {
                 <strong>
                   <BadgeCheck size={17} /> Trust Layer
                 </strong>
-                <span>Verification tools can be added later</span>
+                <span>{founderStatus}</span>
               </div>
 
               <div className="focus-row">
