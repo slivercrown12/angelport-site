@@ -15,7 +15,7 @@ export default function PitchDetail() {
 
   const [pitch, setPitch] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-
+  const [founderProfile, setFounderProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
@@ -52,6 +52,19 @@ export default function PitchDetail() {
       }
 
       setPitch(data);
+      if (data?.owner_id) {
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("full_name, role, headline, bio, verification_status")
+    .eq("id", data.owner_id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error("Founder profile load error:", profileError.message);
+  }
+
+  setFounderProfile(profileData || null);
+}
 
       if (user && data) {
         const { data: watchlistData } = await supabase
@@ -340,6 +353,51 @@ export default function PitchDetail() {
               <h3>Pitch Snapshot</h3>
               <span>Live</span>
             </div>
+            <aside className="pitch-detail-founder-card">
+  <div className="dashboard-panel-head">
+    <h3>Founder Profile</h3>
+    <span>{founderProfile?.verification_status || "Not Verified"}</span>
+  </div>
+
+  <div className="founder-profile-box">
+    <div className="founder-profile-avatar">
+      {(founderProfile?.full_name || "AngelPort User")
+        .split(" ")
+        .map((name) => name[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()}
+    </div>
+
+    <div>
+      <h4>{founderProfile?.full_name || "AngelPort User"}</h4>
+      <p>{founderProfile?.role || "Founder"}</p>
+    </div>
+  </div>
+
+  <div className="focus-list">
+    <div className="focus-row">
+      <strong>Headline</strong>
+      <span>
+        {founderProfile?.headline ||
+          "Founder building and sharing startup opportunities on AngelPort."}
+      </span>
+    </div>
+
+    <div className="focus-row">
+      <strong>Bio</strong>
+      <span>
+        {founderProfile?.bio ||
+          "This founder has not added a public bio yet."}
+      </span>
+    </div>
+
+    <div className="focus-row">
+      <strong>Trust Status</strong>
+      <span>{founderProfile?.verification_status || "Not Verified"}</span>
+    </div>
+  </div>
+</aside>
 
             <div className="focus-list">
               <div className="focus-row">
