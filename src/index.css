@@ -2915,3 +2915,33 @@ button {
   line-height: 0.95;
   margin-top: 24px;
 }
+.discover-card-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.small-badge {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.discover-founder-mini {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discover-founder-mini strong {
+  color: white;
+}
+
+.discover-founder-mini span {
+  color: rgba(255, 255, 255, 0.64);
+}
