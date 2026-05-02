@@ -2873,3 +2873,45 @@ button {
   margin: 5px 0 0;
   color: rgba(255, 255, 255, 0.62);
 }
+.discover-card-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.small-badge {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.discover-founder-mini {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.discover-founder-mini strong {
+  color: white;
+}
+
+.discover-founder-mini span {
+  color: rgba(255, 255, 255, 0.64);
+}
+.pitch-detail-shell {
+  padding-top: 36px;
+}
+
+.pitch-detail-back {
+  margin-bottom: 28px;
+}
+
+.pitch-detail-main-card h1 {
+  line-height: 0.95;
+  margin-top: 24px;
+}
