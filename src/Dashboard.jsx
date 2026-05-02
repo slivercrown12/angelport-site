@@ -97,6 +97,8 @@ export default function Dashboard() {
   const [editingPitchId, setEditingPitchId] = useState(null);
   const [pitchSaving, setPitchSaving] = useState(false);
   const [pitchMessage, setPitchMessage] = useState("");
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const [verificationSaving, setVerificationSaving] = useState(false);
 
 const user = session?.user || null;
 const email = user?.email || "";
@@ -434,6 +436,57 @@ useEffect(() => {
       )
     );
   }
+  async function updateVerificationStatus(nextStatus) {
+  if (!user) return;
+
+  setVerificationSaving(true);
+  setVerificationMessage("");
+
+  const { error } = await supabase
+    .from("user_profiles")
+    .upsert({
+      id: user.id,
+      full_name: profile.full_name,
+      role,
+      headline: profile.headline,
+      bio: profile.bio,
+      verification_status: nextStatus,
+      updated_at: new Date().toISOString(),
+    });
+
+  if (error) {
+    setVerificationMessage(error.message);
+    setVerificationSaving(false);
+    return;
+  }
+
+  setProfile((prev) => ({
+    ...prev,
+    verification_status: nextStatus,
+  }));
+
+  setVerificationSaving(false);
+
+  if (nextStatus === "Pending") {
+    setVerificationMessage("Verification submitted for review.");
+  } else if (nextStatus === "Verified") {
+    setVerificationMessage("Verification approved.");
+  } else {
+    setVerificationMessage("Verification data deleted.");
+  }
+}
+
+function handleSubmitVerification() {
+  updateVerificationStatus("Pending");
+}
+
+function handleMockApproveVerification() {
+  updateVerificationStatus("Verified");
+}
+
+function handleDeleteVerificationData() {
+  updateVerificationStatus("Not Verified");
+}
 
   async function handleRemoveWatchlistItem(watchlistId) {
     if (!user) return;
@@ -1285,6 +1338,124 @@ useEffect(() => {
     );
   }
 
+  function renderVerification() {
+  const status = profile.verification_status || "Not Verified";
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Identity Verification</h3>
+          <span>{status}</span>
+        </div>
+
+        <div className="verification-status-box">
+          <div className="verification-status-icon">
+            <BadgeCheck size={28} />
+          </div>
+
+          <div>
+            <h2>{status}</h2>
+            <p>
+              Verification helps AngelPort build trust between founders and
+              investors. For now, this is a mock verification flow. Do not upload
+              real ID documents yet.
+            </p>
+          </div>
+        </div>
+
+        <div className="verification-upload-grid">
+          <div className="verification-upload-card">
+            <strong>ID or Passport</strong>
+            <span>Mock upload placeholder</span>
+            <p>Later this will connect to a secure identity provider.</p>
+          </div>
+
+          <div className="verification-upload-card">
+            <strong>Selfie Check</strong>
+            <span>Mock selfie placeholder</span>
+            <p>Later this will compare the selfie with the uploaded ID.</p>
+          </div>
+
+          <div className="verification-upload-card">
+            <strong>Business Proof</strong>
+            <span>Optional founder proof</span>
+            <p>Later this can support business documents or website proof.</p>
+          </div>
+        </div>
+
+        {verificationMessage ? (
+          <p className="auth-message">{verificationMessage}</p>
+        ) : null}
+
+        <div className="pitch-actions">
+          {status === "Not Verified" ? (
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={handleSubmitVerification}
+              disabled={verificationSaving}
+            >
+              {verificationSaving ? "Submitting..." : "Submit Mock Verification"}
+            </button>
+          ) : null}
+
+          {status === "Pending" ? (
+            <button
+              type="button"
+              className="primary-btn"
+              onClick={handleMockApproveVerification}
+              disabled={verificationSaving}
+            >
+              {verificationSaving ? "Approving..." : "Mock Approve"}
+            </button>
+          ) : null}
+
+          {status !== "Not Verified" ? (
+            <button
+              type="button"
+              className="secondary-btn pitch-delete-btn"
+              onClick={handleDeleteVerificationData}
+              disabled={verificationSaving}
+            >
+              Delete Verification Data
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Trust Status</h3>
+          <span>Profile</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Current Status</strong>
+            <span>{status}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Who can see it?</strong>
+            <span>Investors can see verification status on public profiles later.</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Real Provider Later</strong>
+            <span>Use Persona, Stripe Identity, Onfido, or Veriff.</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Privacy Rule</strong>
+            <span>Store only the verification result, not raw ID files.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -1321,14 +1492,7 @@ useEffect(() => {
         );
 
       case "Verification":
-        return renderSimplePanel(
-          "Verification",
-          "Verification tools will help make AngelPort safer for founders and investors.",
-          [
-            { label: "Identity", value: profile.verification_status || "Not Verified" },
-            { label: "Future Feature", value: "ID and business verification" },
-          ]
-        );
+  return renderVerification();
 
       case "Settings":
         return renderSimplePanel(
