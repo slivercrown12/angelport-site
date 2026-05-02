@@ -252,54 +252,78 @@ useEffect(() => {
     navigate("/");
   }
 
-  async function handleSaveProfile(e) {
-    e.preventDefault();
-    if (!user) return;
+async function handleSaveProfile(e) {
+  e.preventDefault();
 
-    setProfileSaving(true);
-    setProfileMessage("");
+  if (!user) {
+    setProfileMessage("You must be signed in to save your profile.");
+    return;
+  }
 
-    const cleanProfile = {
-      full_name: profileForm.full_name.trim() || "AngelPort User",
-      role: profileForm.role,
-      headline: profileForm.headline.trim(),
-      bio: profileForm.bio.trim(),
-      verification_status: profile.verification_status || "Not Verified",
-    };
+  setProfileSaving(true);
+  setProfileMessage("");
 
-    const { error: metadataError } = await supabase.auth.updateUser({
-      data: {
-        full_name: cleanProfile.full_name,
-        role: cleanProfile.role,
-        headline: cleanProfile.headline,
-        bio: cleanProfile.bio,
-      },
-    });
+  const cleanProfile = {
+    full_name: profileForm.full_name.trim() || "AngelPort User",
+    role: profileForm.role || "Founder",
+    headline: profileForm.headline.trim(),
+    bio: profileForm.bio.trim(),
+    verification_status: profile.verification_status || "Not Verified",
+  };
 
-    if (metadataError) {
-      setProfileMessage(metadataError.message);
-      setProfileSaving(false);
-      return;
-    }
-
-    const { error: profileError } = await supabase.from("user_profiles").upsert({
-      id: user.id,
+  const { error: metadataError } = await supabase.auth.updateUser({
+    data: {
       full_name: cleanProfile.full_name,
       role: cleanProfile.role,
       headline: cleanProfile.headline,
       bio: cleanProfile.bio,
       verification_status: cleanProfile.verification_status,
-      updated_at: new Date().toISOString(),
-    });
+    },
+  });
 
-    if (profileError) {
-      console.error("Profile save error:", profileError.message);
-    }
-
-    setProfile(cleanProfile);
-    setProfileMessage("Profile updated.");
+  if (metadataError) {
+    setProfileMessage(metadataError.message);
     setProfileSaving(false);
+    return;
   }
+
+  const { data: savedProfile, error: profileError } = await supabase
+    .from("user_profiles")
+    .upsert(
+      {
+        id: user.id,
+        full_name: cleanProfile.full_name,
+        role: cleanProfile.role,
+        headline: cleanProfile.headline,
+        bio: cleanProfile.bio,
+        verification_status: cleanProfile.verification_status,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "id",
+      }
+    )
+    .select()
+    .single();
+
+  if (profileError) {
+    setProfileMessage(profileError.message);
+    setProfileSaving(false);
+    return;
+  }
+
+  setProfile({
+    full_name: savedProfile.full_name || cleanProfile.full_name,
+    role: savedProfile.role || cleanProfile.role,
+    headline: savedProfile.headline || "",
+    bio: savedProfile.bio || "",
+    verification_status:
+      savedProfile.verification_status || cleanProfile.verification_status,
+  });
+
+  setProfileMessage("Profile saved to Supabase.");
+  setProfileSaving(false);
+}
 
   async function handleSavePitch(e) {
     e.preventDefault();
