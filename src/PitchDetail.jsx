@@ -14,16 +14,26 @@ export default function PitchDetail() {
   const navigate = useNavigate();
 
   const [pitch, setPitch] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [errorText, setErrorText] = useState("");
 
   const [interestSaving, setInterestSaving] = useState(false);
   const [interestMessage, setInterestMessage] = useState("");
 
+  const [watchlistSaving, setWatchlistSaving] = useState(false);
+  const [watchlistMessage, setWatchlistMessage] = useState("");
+  const [watchlistItemId, setWatchlistItemId] = useState(null);
+
   useEffect(() => {
-    async function loadPitch() {
+    async function loadPitchAndUser() {
       setLoading(true);
       setErrorText("");
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const user = sessionData?.session?.user || null;
+      setCurrentUser(user);
 
       const { data, error } = await supabase
         .from("pitches")
@@ -42,10 +52,22 @@ export default function PitchDetail() {
       }
 
       setPitch(data);
+
+      if (user && data) {
+        const { data: watchlistData } = await supabase
+          .from("pitch_watchlist")
+          .select("id")
+          .eq("pitch_id", data.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        setWatchlistItemId(watchlistData?.id || null);
+      }
+
       setLoading(false);
     }
 
-    loadPitch();
+    loadPitchAndUser();
   }, [id]);
 
   async function handleContactFounder() {
@@ -56,9 +78,11 @@ export default function PitchDetail() {
 
     if (!session?.user) {
       setInterestMessage("Please log in before contacting a founder.");
+
       setTimeout(() => {
         navigate("/login");
       }, 900);
+
       return;
     }
 
@@ -71,19 +95,19 @@ export default function PitchDetail() {
 
     setInterestSaving(true);
 
-const interestedName =
-  session.user.user_metadata?.full_name ||
-  session.user.user_metadata?.name ||
-  "AngelPort User";
+    const interestedName =
+      session.user.user_metadata?.full_name ||
+      session.user.user_metadata?.name ||
+      "AngelPort User";
 
-const { error } = await supabase.from("pitch_interests").insert({
-  pitch_id: pitch.id,
-  founder_id: pitch.owner_id,
-  interested_user_id: session.user.id,
-  interested_email: session.user.email,
-  interested_name: interestedName,
-  message: "I am interested in learning more about this pitch.",
-});
+    const { error } = await supabase.from("pitch_interests").insert({
+      pitch_id: pitch.id,
+      founder_id: pitch.owner_id,
+      interested_user_id: session.user.id,
+      interested_email: session.user.email,
+      interested_name: interestedName,
+      message: "I am interested in learning more about this pitch.",
+    });
 
     if (error) {
       setInterestSaving(false);
@@ -98,7 +122,79 @@ const { error } = await supabase.from("pitch_interests").insert({
     }
 
     setInterestSaving(false);
-    setInterestMessage("Interest sent. The founder will be able to see this later.");
+    setInterestMessage(
+      "Interest sent. The founder will be able to see this later."
+    );
+  }
+
+  async function handleToggleWatchlist() {
+    setWatchlistMessage("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const session = sessionData?.session;
+
+    if (!session?.user) {
+      setWatchlistMessage("Please log in before saving this pitch.");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 900);
+
+      return;
+    }
+
+    if (!pitch) return;
+
+    if (session.user.id === pitch.owner_id) {
+      setWatchlistMessage("This is your own pitch.");
+      return;
+    }
+
+    setWatchlistSaving(true);
+
+    if (watchlistItemId) {
+      const { error } = await supabase
+        .from("pitch_watchlist")
+        .delete()
+        .eq("id", watchlistItemId)
+        .eq("user_id", session.user.id);
+
+      if (error) {
+        setWatchlistSaving(false);
+        setWatchlistMessage(error.message);
+        return;
+      }
+
+      setWatchlistItemId(null);
+      setWatchlistSaving(false);
+      setWatchlistMessage("Removed from watchlist.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from("pitch_watchlist")
+      .insert({
+        pitch_id: pitch.id,
+        user_id: session.user.id,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      setWatchlistSaving(false);
+
+      if (error.code === "23505") {
+        setWatchlistMessage("This pitch is already in your watchlist.");
+        return;
+      }
+
+      setWatchlistMessage(error.message);
+      return;
+    }
+
+    setWatchlistItemId(data.id);
+    setWatchlistSaving(false);
+    setWatchlistMessage("Saved to watchlist.");
   }
 
   if (loading) {
@@ -145,11 +241,17 @@ const { error } = await supabase.from("pitch_interests").insert({
     );
   }
 
+  const isOwner = currentUser?.id === pitch.owner_id;
+
   return (
     <div className="pitch-detail-page">
       <header className="discover-topbar">
         <Link to="/discover" className="discover-brand">
-          <div className="sidebar-logo">A</div>
+          <img
+            src="/angelport-icon.png"
+            alt="AngelPort logo"
+            className="brand-logo-img"
+          />
           <div>
             <h1>AngelPort</h1>
             <p>Pitch Detail</p>
@@ -193,13 +295,22 @@ const { error } = await supabase.from("pitch_interests").insert({
                 className="primary-btn"
                 type="button"
                 onClick={handleContactFounder}
-                disabled={interestSaving}
+                disabled={interestSaving || isOwner}
               >
                 {interestSaving ? "Sending..." : "Contact Founder"}
               </button>
 
-              <button className="secondary-btn" type="button">
-                Save to Watchlist
+              <button
+                className="secondary-btn"
+                type="button"
+                onClick={handleToggleWatchlist}
+                disabled={watchlistSaving || isOwner}
+              >
+                {watchlistSaving
+                  ? "Saving..."
+                  : watchlistItemId
+                    ? "Remove from Watchlist"
+                    : "Save to Watchlist"}
               </button>
             </div>
 
@@ -207,10 +318,21 @@ const { error } = await supabase.from("pitch_interests").insert({
               <p className="auth-message">{interestMessage}</p>
             ) : null}
 
-            <p className="pitch-detail-note">
-              Contact Founder now saves investor interest to Supabase.
-              Watchlist tools can be added next.
-            </p>
+            {watchlistMessage ? (
+              <p className="auth-message">{watchlistMessage}</p>
+            ) : null}
+
+            {isOwner ? (
+              <p className="pitch-detail-note">
+                You are viewing your own public pitch. Investors will be able to
+                contact you from this page.
+              </p>
+            ) : (
+              <p className="pitch-detail-note">
+                Contact Founder sends interest to the founder. Save to Watchlist
+                keeps this pitch in your investor dashboard.
+              </p>
+            )}
           </div>
 
           <aside className="pitch-detail-side-card">
@@ -233,6 +355,11 @@ const { error } = await supabase.from("pitch_interests").insert({
               <div className="focus-row">
                 <strong>Funding Goal</strong>
                 <span>{pitch.funding_goal || "Not listed"}</span>
+              </div>
+
+              <div className="focus-row">
+                <strong>Watchlist</strong>
+                <span>{watchlistItemId ? "Saved" : "Not saved"}</span>
               </div>
             </div>
           </aside>
@@ -280,9 +407,13 @@ const { error } = await supabase.from("pitch_interests").insert({
 
               <div className="focus-row">
                 <strong>
-                  <Handshake size={17} /> Deal Flow
+                  <Handshake size={17} /> Watchlist
                 </strong>
-                <span>Interest tracking is now active</span>
+                <span>
+                  {watchlistItemId
+                    ? "This pitch is saved to your watchlist"
+                    : "Save this pitch to track it later"}
+                </span>
               </div>
             </div>
           </div>

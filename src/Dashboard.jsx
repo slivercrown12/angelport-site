@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   BadgeCheck,
@@ -21,7 +21,8 @@ const navItems = [
   { icon: LayoutDashboard, label: "Overview" },
   { icon: UserRound, label: "Profile" },
   { icon: BriefcaseBusiness, label: "Pitches" },
-  { icon: Mail, label: "Messages" },
+  { icon: Star, label: "Watchlist" },
+  { icon: Mail, label: "Investor Interest" },
   { icon: Handshake, label: "Deals" },
   { icon: BarChart3, label: "Analytics" },
   { icon: BadgeCheck, label: "Verification" },
@@ -43,10 +44,31 @@ const emptyPitchForm = {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(true);
   const [session, setSession] = useState(null);
   const [selectedSection, setSelectedSection] = useState("Overview");
+
+  useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const section = params.get("section");
+
+  const validSections = [
+    "Overview",
+    "Profile",
+    "Pitches",
+    "Watchlist",
+    "Investor Interest",
+    "Deals",
+    "Analytics",
+    "Verification",
+  ];
+
+  if (section && validSections.includes(section)) {
+    setSelectedSection(section);
+  }
+}, [location.search]);
 
   const [profileName, setProfileName] = useState("");
   const [profileRole, setProfileRole] = useState("Founder");
@@ -59,6 +81,7 @@ export default function Dashboard() {
   const [pitchSaving, setPitchSaving] = useState(false);
   const [pitchMessage, setPitchMessage] = useState("");
   const [interests, setInterests] = useState([]);
+  const [watchlist, setWatchlist] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -156,6 +179,42 @@ export default function Dashboard() {
   loadInterests();
 }, [session]);
 
+useEffect(() => {
+  if (!session?.user) return;
+
+  async function loadWatchlist() {
+    const { data, error } = await supabase
+      .from("pitch_watchlist")
+      .select(
+        `
+        id,
+        pitch_id,
+        created_at,
+        pitches (
+          id,
+          startup_name,
+          industry,
+          short_description,
+          funding_goal,
+          traction,
+          status
+        )
+      `
+      )
+      .eq("user_id", session.user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Watchlist load error:", error.message);
+      return;
+    }
+
+    setWatchlist(data || []);
+  }
+
+  loadWatchlist();
+}, [session]);
+
   const email = session?.user?.email || "No email";
 
   const fullName =
@@ -230,7 +289,7 @@ const reviewedInterests = interests.filter(
     unreviewedInterests === 1
       ? "1 new request"
       : `${unreviewedInterests} new requests`,
-  target: "Messages",
+  target: "Investor Interest",
 },
         {
           icon: Star,
@@ -250,18 +309,21 @@ const reviewedInterests = interests.filter(
       ]
     : [
         {
-          icon: Search,
-          label: "Saved Startups",
-          value: "00",
-          sub: "watchlist coming soon",
-          target: "Pitches",
-        },
+  icon: Search,
+  label: "Saved Startups",
+  value: String(watchlist.length).padStart(2, "0"),
+  sub:
+    watchlist.length === 1
+      ? "1 saved pitch"
+      : `${watchlist.length} saved pitches`,
+  target: "Pitches",
+},
         {
           icon: Mail,
           label: "Unread Messages",
           value: "00",
           sub: "messages coming soon",
-          target: "Messages",
+          target: "Investor Interest",
         },
         {
           icon: Handshake,
@@ -483,6 +545,23 @@ const reviewedInterests = interests.filter(
         : interest
     )
   );
+}
+
+async function handleRemoveWatchlistItem(watchlistId) {
+  if (!session?.user) return;
+
+  const { error } = await supabase
+    .from("pitch_watchlist")
+    .delete()
+    .eq("id", watchlistId)
+    .eq("user_id", session.user.id);
+
+  if (error) {
+    console.error("Watchlist remove error:", error.message);
+    return;
+  }
+
+  setWatchlist((prev) => prev.filter((item) => item.id !== watchlistId));
 }
 
   function renderOverview() {
@@ -904,8 +983,172 @@ const reviewedInterests = interests.filter(
           )}
         </div>
       </section>
+
+      
     );
+          <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Saved Watchlist</h3>
+          <span>{watchlist.length}</span>
+        </div>
+
+        {watchlist.length === 0 ? (
+          <div className="focus-list">
+            <div className="focus-row">
+              <strong>No saved pitches yet</strong>
+              <span>
+                Save public pitches from Discover to track them here.
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="focus-list">
+            {watchlist.map((item) => {
+              const savedPitch = item.pitches;
+
+              return (
+                <div key={item.id} className="focus-row pitch-list-item">
+                  <div className="pitch-list-top">
+                    <strong>
+                      {savedPitch?.startup_name || "Unknown pitch"}
+                    </strong>
+                    <span className="pitch-status-badge">Saved</span>
+                  </div>
+
+                  <span>
+                    {savedPitch?.short_description ||
+                      "No description available."}
+                  </span>
+
+                  <span>
+                    {savedPitch?.industry || "No industry"}
+                    {savedPitch?.funding_goal
+                      ? ` • ${savedPitch.funding_goal}`
+                      : ""}
+                  </span>
+
+                  <div className="pitch-actions">
+                    {savedPitch?.id ? (
+                      <Link
+                        to={`/pitch/${savedPitch.id}`}
+                        className="secondary-btn pitch-edit-btn"
+                      >
+                        View Pitch
+                      </Link>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      className="secondary-btn pitch-delete-btn"
+                      onClick={() => handleRemoveWatchlistItem(item.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
   }
+  function renderWatchlist() {
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Saved Watchlist</h3>
+          <span>{watchlist.length}</span>
+        </div>
+
+        {watchlist.length === 0 ? (
+          <div className="activity-list">
+            <div className="activity-item">
+              <div className="activity-dot" />
+              <div className="activity-text">
+                No saved pitches yet. Open Discover and save public pitches to track them here.
+              </div>
+            </div>
+
+            <div className="activity-item">
+              <div className="activity-dot" />
+              <div className="activity-text">
+                Watchlist helps investors keep track of startups they may want to revisit.
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="focus-list">
+            {watchlist.map((item) => {
+              const savedPitch = item.pitches;
+
+              return (
+                <div key={item.id} className="focus-row pitch-list-item">
+                  <div className="pitch-list-top">
+                    <strong>{savedPitch?.startup_name || "Unknown pitch"}</strong>
+                    <span className="pitch-status-badge">Saved</span>
+                  </div>
+
+                  <span>
+                    {savedPitch?.short_description || "No description available."}
+                  </span>
+
+                  <span>
+                    {savedPitch?.industry || "No industry"}
+                    {savedPitch?.funding_goal ? ` • ${savedPitch.funding_goal}` : ""}
+                  </span>
+
+                  <div className="pitch-actions">
+                    {savedPitch?.id ? (
+                      <Link
+                        to={`/pitch/${savedPitch.id}`}
+                        className="secondary-btn pitch-edit-btn"
+                      >
+                        View Pitch
+                      </Link>
+                    ) : null}
+
+                    <button
+                      type="button"
+                      className="secondary-btn pitch-delete-btn"
+                      onClick={() => handleRemoveWatchlistItem(item.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Watchlist Status</h3>
+          <span>Live</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Saved Pitches</strong>
+            <span>{watchlist.length}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Source</strong>
+            <span>Save to Watchlist button</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Next Step</strong>
+            <span>Add notes or investor categories later.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 function renderMessages() {
   return (
     <section className="dashboard-content-grid">
@@ -990,7 +1233,7 @@ function renderMessages() {
 
       <div className="dashboard-panel">
         <div className="dashboard-panel-head">
-          <h3>Message Status</h3>
+          <h3>Interest Status</h3>
           <span>Live</span>
         </div>
 
@@ -1144,7 +1387,7 @@ function renderMessages() {
         return renderProfile();
       case "Pitches":
         return renderPitches();
-      case "Messages":
+      case "Investor Interest":
         return renderMessages();
       case "Deals":
         return renderDeals();
@@ -1154,6 +1397,8 @@ function renderMessages() {
         return renderVerification();
       default:
         return renderOverview();
+      case "Watchlist":
+        return renderWatchlist();    
     }
   }
 
