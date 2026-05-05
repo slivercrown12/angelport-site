@@ -1587,6 +1587,146 @@ function handleDeleteVerificationData() {
   );
 }
 
+function renderSettings() {
+  const verificationStatus = profile.verification_status || "Not Verified";
+  const settingsName = profile.full_name || "AngelPort User";
+  const settingsInitials = getInitials(settingsName || email);
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Account Settings</h3>
+          <span>Private</span>
+        </div>
+
+        <div className="settings-account-card">
+          <div className="user-avatar large-avatar">{settingsInitials}</div>
+
+          <div>
+            <h2>{settingsName}</h2>
+            <p>{email}</p>
+            <span className="account-role-chip">{role}</span>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h4>Account</h4>
+
+          <div className="focus-list">
+            <div className="focus-row">
+              <strong>Email</strong>
+              <span>{email}</span>
+            </div>
+
+            <div className="focus-row">
+              <strong>Role</strong>
+              <span>{role}</span>
+            </div>
+
+            <div className="focus-row">
+              <strong>Profile Name</strong>
+              <span>{settingsName}</span>
+            </div>
+
+            <div className="focus-row">
+              <strong>Verification</strong>
+              <span>{verificationStatus}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-actions">
+          <button
+            type="button"
+            className="primary-btn"
+            onClick={() => setSelectedSection("Profile")}
+          >
+            Edit Public Profile
+          </button>
+
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => setSelectedSection("Verification")}
+          >
+            Manage Verification
+          </button>
+
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Privacy & Safety</h3>
+          <span>Account</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Public Profile</strong>
+            <span>
+              Your name, role, headline, bio, and verification status may appear
+              on public pitch pages.
+            </span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Private Data</strong>
+            <span>
+              AngelPort should not store raw ID documents long-term. Later, use
+              a provider and store only the verification result.
+            </span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Investor Contact</strong>
+            <span>
+              Investor interest is saved only when someone clicks Contact Founder.
+            </span>
+          </div>
+        </div>
+
+        <div className="settings-danger-zone">
+          <h4>Verification Data</h4>
+          <p>
+            This mock button resets your verification status. It does not delete
+            your AngelPort account.
+          </p>
+
+          <button
+            type="button"
+            className="secondary-btn pitch-delete-btn"
+            disabled={verificationSaving || verificationStatus === "Not Verified"}
+            onClick={() => {
+              const confirmed = window.confirm(
+                "Reset your verification status to Not Verified?"
+              );
+
+              if (confirmed) {
+                handleDeleteVerificationData();
+              }
+            }}
+          >
+            {verificationSaving
+              ? "Updating..."
+              : verificationStatus === "Not Verified"
+                ? "No Verification Data"
+                : "Delete Verification Data"}
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -1625,15 +1765,8 @@ function handleDeleteVerificationData() {
       case "Verification":
   return renderVerification();
 
-      case "Settings":
-        return renderSimplePanel(
-          "Settings",
-          "Account settings and platform preferences will live here.",
-          [
-            { label: "Email", value: email },
-            { label: "Role", value: role },
-          ]
-        );
+case "Settings":
+  return renderSettings();
 
       case "Help Center":
         return renderSimplePanel(
