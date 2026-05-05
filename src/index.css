@@ -2945,3 +2945,65 @@ button {
 .discover-founder-mini span {
   color: rgba(255, 255, 255, 0.64);
 }
+.profile-preview-card {
+  min-height: 520px;
+}
+
+.profile-preview-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 26px 0 18px;
+}
+
+.profile-preview-identity h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.profile-preview-identity p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.profile-preview-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 26px;
+}
+
+.profile-progress-block {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  margin-bottom: 26px;
+}
+
+.profile-progress-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.profile-progress-top span {
+  color: #ddd6fe;
+  font-weight: 900;
+}
+
+.profile-progress-track {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.profile-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  transition: width 0.2s ease;
+}

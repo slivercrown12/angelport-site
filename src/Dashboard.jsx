@@ -863,121 +863,164 @@ function handleDeleteVerificationData() {
   }
 
   function renderProfile() {
-    return (
-      <section className="dashboard-content-grid">
-        <form className="dashboard-panel large" onSubmit={handleSaveProfile}>
-          <div className="dashboard-panel-head">
-            <h3>Edit Profile</h3>
-            <span>Live</span>
-          </div>
+  const previewName = profile.full_name || "AngelPort User";
+  const previewInitials = getInitials(previewName || email);
+  const verificationStatus = profile.verification_status || "Not Verified";
 
-          <div className="field-group">
-            <label>Full Name</label>
-            <input
-              className="waitlist-input"
-              value={profileForm.full_name}
-              onChange={(e) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  full_name: e.target.value,
-                }))
-              }
-              placeholder="Your full name"
-            />
-          </div>
+  return (
+    <section className="dashboard-content-grid">
+      <form className="dashboard-panel large" onSubmit={handleSaveProfile}>
+        <div className="dashboard-panel-head">
+          <h3>Edit Public Profile</h3>
+          <span>{profileCompletion}% complete</span>
+        </div>
 
-          <div className="field-group">
-            <label>Role</label>
-            <select
-              className="waitlist-input"
-              value={profileForm.role}
-              onChange={(e) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  role: e.target.value,
-                }))
-              }
-            >
-              <option>Founder</option>
-              <option>Investor</option>
-              <option>Both</option>
-            </select>
-          </div>
+        <p className="pitch-detail-muted">
+          This information appears on your public founder profile and pitch pages.
+        </p>
 
-          <div className="field-group">
-            <label>Headline</label>
-            <input
-              className="waitlist-input"
-              value={profileForm.headline}
-              onChange={(e) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  headline: e.target.value,
-                }))
-              }
-              placeholder="Example: Founder building clean energy tools"
-            />
-          </div>
+        <div className="field-group">
+          <label>Full Name</label>
+          <input
+            className="waitlist-input"
+            value={profileForm.full_name}
+            onChange={(e) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                full_name: e.target.value,
+              }))
+            }
+            placeholder="Example: Subri Ismail"
+          />
+        </div>
 
-          <div className="field-group">
-            <label>Bio</label>
-            <textarea
-              className="waitlist-input"
-              value={profileForm.bio}
-              onChange={(e) =>
-                setProfileForm((prev) => ({
-                  ...prev,
-                  bio: e.target.value,
-                }))
-              }
-              placeholder="Short public bio"
-              rows={5}
-            />
-          </div>
+        <div className="field-group">
+          <label>Role</label>
+          <select
+            className="waitlist-input"
+            value={profileForm.role}
+            onChange={(e) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                role: e.target.value,
+              }))
+            }
+          >
+            <option>Founder</option>
+            <option>Investor</option>
+            <option>Both</option>
+          </select>
+        </div>
 
-          {profileMessage ? <p className="auth-message">{profileMessage}</p> : null}
+        <div className="field-group">
+          <label>Headline</label>
+          <input
+            className="waitlist-input"
+            value={profileForm.headline}
+            onChange={(e) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                headline: e.target.value,
+              }))
+            }
+            placeholder="Example: Founder building AngelPort for startup discovery"
+          />
+        </div>
 
-          <button className="primary-btn full-btn" disabled={profileSaving}>
-            {profileSaving ? "Saving..." : "Save Profile"}
-          </button>
-        </form>
+        <div className="field-group">
+          <label>Bio</label>
+          <textarea
+            className="waitlist-input"
+            value={profileForm.bio}
+            onChange={(e) =>
+              setProfileForm((prev) => ({
+                ...prev,
+                bio: e.target.value,
+              }))
+            }
+            placeholder="Write a short bio investors can read."
+            rows={6}
+          />
+        </div>
 
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-head">
-            <h3>Current Identity</h3>
-            <span>Preview</span>
-          </div>
+        {profileMessage ? (
+          <p className="auth-message">{profileMessage}</p>
+        ) : null}
 
-          <div className="focus-list">
-            <div className="focus-row">
-              <strong>Full Name</strong>
-              <span>{profile.full_name}</span>
-            </div>
+        <button className="primary-btn full-btn" disabled={profileSaving}>
+          {profileSaving ? "Saving Profile..." : "Save Public Profile"}
+        </button>
+      </form>
 
-            <div className="focus-row">
-              <strong>Email</strong>
-              <span>{email}</span>
-            </div>
+      <div className="dashboard-panel profile-preview-card">
+        <div className="dashboard-panel-head">
+          <h3>Public Preview</h3>
+          <span>Investor View</span>
+        </div>
 
-            <div className="focus-row">
-              <strong>Role</strong>
-              <span>{role}</span>
-            </div>
+        <div className="profile-preview-identity">
+          <div className="user-avatar large-avatar">{previewInitials}</div>
 
-            <div className="focus-row">
-              <strong>Headline</strong>
-              <span>{profile.headline || "No headline yet"}</span>
-            </div>
-
-            <div className="focus-row">
-              <strong>Verification</strong>
-              <span>{profile.verification_status || "Not Verified"}</span>
-            </div>
+          <div>
+            <h2>{previewName}</h2>
+            <p>{profile.role || "Founder"}</p>
           </div>
         </div>
-      </section>
-    );
-  }
+
+        <div className="profile-preview-badges">
+          <span className="account-role-chip">{profile.role || "Founder"}</span>
+
+          {verificationStatus === "Verified" ? (
+            <span className="verified-founder-badge small-badge">
+              <BadgeCheck size={15} />
+              Verified
+            </span>
+          ) : (
+            <span className="unverified-founder-badge small-badge">
+              {verificationStatus}
+            </span>
+          )}
+        </div>
+
+        <div className="profile-progress-block">
+          <div className="profile-progress-top">
+            <strong>Profile Completion</strong>
+            <span>{profileCompletion}%</span>
+          </div>
+
+          <div className="profile-progress-track">
+            <div
+              className="profile-progress-fill"
+              style={{ width: `${profileCompletion}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Email</strong>
+            <span>{email}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Headline</strong>
+            <span>{profile.headline || "No headline added yet."}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Bio</strong>
+            <span>{profile.bio || "No public bio added yet."}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Trust Status</strong>
+            <span>{verificationStatus}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
   function renderPitches() {
     return (
