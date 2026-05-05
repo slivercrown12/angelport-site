@@ -1727,6 +1727,122 @@ function renderSettings() {
   );
 }
 
+function renderHelpCenter() {
+  const helpCards = [
+    {
+      title: "For Founders",
+      body:
+        "Create startup pitches, choose Draft or Public, and track investor interest when someone clicks Contact Founder.",
+      action: "Go to Pitches",
+      section: "Pitches",
+      show: isFounder,
+    },
+    {
+      title: "For Investors",
+      body:
+        "Browse public startup pitches, save interesting startups to your Watchlist, and contact founders when you want to learn more.",
+      action: "Open Discover",
+      section: "Discover",
+      show: isInvestor,
+    },
+    {
+      title: "Public vs Draft",
+      body:
+        "Draft pitches stay private inside your dashboard. Public pitches appear in Discover and can be viewed by investors.",
+      action: "Manage Pitches",
+      section: "Pitches",
+      show: isFounder,
+    },
+    {
+      title: "Verification",
+      body:
+        "Verification helps build trust. Right now this is a mock flow. Later, AngelPort can connect to a real identity provider.",
+      action: "Manage Verification",
+      section: "Verification",
+      show: true,
+    },
+  ].filter((card) => card.show);
+
+  const faqItems = [
+    {
+      question: "What does Contact Founder do?",
+      answer:
+        "It saves investor interest to the founder dashboard. The founder can review it and reply by email.",
+    },
+    {
+      question: "What does Watchlist do?",
+      answer:
+        "It lets investors save public pitches so they can return to them later from the dashboard.",
+    },
+    {
+      question: "Can investors see draft pitches?",
+      answer:
+        "No. Draft pitches stay private. Only public pitches appear in Discover.",
+    },
+    {
+      question: "Does AngelPort store real ID documents?",
+      answer:
+        "Not in this mock version. Later, a secure provider should handle ID verification, and AngelPort should store only the verification result.",
+    },
+  ];
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Help Center</h3>
+          <span>Guide</span>
+        </div>
+
+        <p className="pitch-detail-muted">
+          Learn how AngelPort works for founders, investors, verification, public
+          pitches, and saved opportunities.
+        </p>
+
+        <div className="help-card-grid">
+          {helpCards.map((card) => (
+            <div className="help-card" key={card.title}>
+              <h4>{card.title}</h4>
+              <p>{card.body}</p>
+
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => {
+                  if (card.section === "Discover") {
+                    navigate("/discover");
+                    return;
+                  }
+
+                  setSelectedSection(card.section);
+                }}
+              >
+                {card.action}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Quick Answers</h3>
+          <span>FAQ</span>
+        </div>
+
+        <div className="focus-list">
+          {faqItems.map((item) => (
+            <div className="focus-row" key={item.question}>
+              <strong>{item.question}</strong>
+              <span>{item.answer}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -1768,15 +1884,8 @@ function renderSettings() {
 case "Settings":
   return renderSettings();
 
-      case "Help Center":
-        return renderSimplePanel(
-          "Help Center",
-          "Help articles, founder tips, investor tips, and platform guidance will live here.",
-          [
-            { label: "Support", value: "Coming soon" },
-            { label: "Guides", value: "Coming soon" },
-          ]
-        );
+     case "Help Center":
+  return renderHelpCenter();
 
       case "Overview":
       default:
