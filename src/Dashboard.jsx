@@ -1843,6 +1843,143 @@ function renderHelpCenter() {
   );
 }
 
+function renderAnalytics() {
+  const totalPitches = pitches.length;
+  const totalInterests = interests.length;
+  const totalWatchlist = watchlist.length;
+  const verificationStatus = profile.verification_status || "Not Verified";
+
+  const analyticsCards = [
+    {
+      label: "Profile Completion",
+      value: `${profileCompletion}%`,
+      note:
+        profileCompletion === 100
+          ? "Your profile is ready for public viewing."
+          : "Add name, role, headline, and bio to complete your profile.",
+    },
+    {
+      label: "Total Pitches",
+      value: totalPitches,
+      note:
+        totalPitches === 1
+          ? "You have 1 pitch saved."
+          : `You have ${totalPitches} pitches saved.`,
+    },
+    {
+      label: "Public Pitches",
+      value: publicPitches,
+      note:
+        publicPitches > 0
+          ? "These pitches are visible in Discover."
+          : "Publish a pitch to appear in Discover.",
+    },
+    {
+      label: "Draft Pitches",
+      value: draftPitches,
+      note:
+        draftPitches > 0
+          ? "Draft pitches stay private."
+          : "No private draft pitches right now.",
+    },
+    {
+      label: "Investor Interest",
+      value: totalInterests,
+      note:
+        totalInterests > 0
+          ? "People have contacted you through public pitch pages."
+          : "No investor interest yet.",
+    },
+    {
+      label: "Watchlist Saves",
+      value: totalWatchlist,
+      note:
+        totalWatchlist > 0
+          ? "Saved pitches are tracked in your watchlist."
+          : "No saved watchlist items yet.",
+    },
+  ];
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Analytics</h3>
+          <span>Overview</span>
+        </div>
+
+        <p className="pitch-detail-muted">
+          Track your profile readiness, public pitch activity, investor interest,
+          and saved opportunities.
+        </p>
+
+        <div className="analytics-card-grid">
+          {analyticsCards.map((card) => (
+            <div className="analytics-card" key={card.label}>
+              <span>{card.label}</span>
+              <h4>{card.value}</h4>
+              <p>{card.note}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Trust Summary</h3>
+          <span>{verificationStatus}</span>
+        </div>
+
+        <div className="analytics-trust-box">
+          <div className="verification-status-icon">
+            <BadgeCheck size={26} />
+          </div>
+
+          <div>
+            <h4>{verificationStatus}</h4>
+            <p>
+              Your verification status can appear on public pitch pages and help
+              investors understand the trust level of your profile.
+            </p>
+          </div>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Founder Profile</strong>
+            <span>{displayName}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Role</strong>
+            <span>{role}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Public Visibility</strong>
+            <span>
+              {publicPitches > 0
+                ? `${publicPitches} public pitch${publicPitches === 1 ? "" : "es"} live`
+                : "No public pitches live"}
+            </span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Next Step</strong>
+            <span>
+              {profileCompletion < 100
+                ? "Finish your public profile."
+                : publicPitches === 0
+                  ? "Publish your first pitch."
+                  : "Keep tracking investor interest."}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -1868,15 +2005,7 @@ function renderHelpCenter() {
         );
 
       case "Analytics":
-        return renderSimplePanel(
-          "Analytics",
-          "Analytics will show profile completion, public pitch visibility, interest activity, and saved pitch trends.",
-          [
-            { label: "Profile Completion", value: `${profileCompletion}%` },
-            { label: "Public Pitches", value: String(publicPitches) },
-            { label: "Saved Watchlist", value: String(watchlist.length) },
-          ]
-        );
+  return renderAnalytics();
 
       case "Verification":
   return renderVerification();
