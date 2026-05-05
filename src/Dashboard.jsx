@@ -102,6 +102,8 @@ export default function Dashboard() {
 
 const user = session?.user || null;
 const email = user?.email || "";
+const displayName = profile.full_name || "AngelPort User";
+const displayInitials = getInitials(displayName || email);
 
 const role = profile.role || user?.user_metadata?.role || "Founder";
 const isFounder = role === "Founder" || role === "Both";
@@ -149,6 +151,68 @@ const navItems = [
   { icon: Settings, label: "Settings", show: true },
   { icon: CircleHelp, label: "Help Center", show: true },
 ].filter((item) => item.show);
+
+useEffect(() => {
+  if (!user) return;
+
+  async function loadProfile() {
+    console.log("Loading profile for user id:", user.id);
+    console.log("Current email:", user.email);
+
+    const metadata = user.user_metadata || {};
+
+    const fallbackProfile = {
+      full_name:
+        metadata.full_name ||
+        metadata.name ||
+        user.email?.split("@")[0] ||
+        "AngelPort User",
+      role: metadata.role || "Founder",
+      headline: metadata.headline || "",
+      bio: metadata.bio || "",
+      verification_status: metadata.verification_status || "Not Verified",
+    };
+
+    const { data, error } = await supabase
+      .from("user_profiles")
+      .select("full_name, role, headline, bio, verification_status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    console.log("Profile query data:", data);
+    console.log("Profile query error:", error);
+
+    if (error) {
+      setProfile(fallbackProfile);
+      setProfileForm({
+        full_name: fallbackProfile.full_name,
+        role: fallbackProfile.role,
+        headline: fallbackProfile.headline,
+        bio: fallbackProfile.bio,
+      });
+      return;
+    }
+
+    const finalProfile = {
+      full_name: data?.full_name || fallbackProfile.full_name,
+      role: data?.role || fallbackProfile.role,
+      headline: data?.headline || "",
+      bio: data?.bio || "",
+      verification_status:
+        data?.verification_status || fallbackProfile.verification_status,
+    };
+
+    setProfile(finalProfile);
+    setProfileForm({
+      full_name: finalProfile.full_name,
+      role: finalProfile.role,
+      headline: finalProfile.headline,
+      bio: finalProfile.bio,
+    });
+  }
+
+  loadProfile();
+}, [user]);
 
 useEffect(() => {
   let mounted = true;
@@ -673,7 +737,7 @@ function handleDeleteVerificationData() {
           <div className="dashboard-account-card">
             <div className="account-card-row">
               <div className="user-avatar large-avatar">
-                {getInitials(profile.full_name || email)}
+                {displayInitials}
               </div>
               <div>
                 <p>Account</p>
@@ -681,7 +745,7 @@ function handleDeleteVerificationData() {
               </div>
             </div>
 
-            <p>{profile.full_name}</p>
+            <p>{displayName}</p>
             <span className="account-role-chip">{role}</span>
           </div>
         </section>
@@ -1568,13 +1632,13 @@ function handleDeleteVerificationData() {
           </div>
         </div>
 
-        <div className="sidebar-profile-card">
-          <div className="user-avatar">{getInitials(profile.full_name || email)}</div>
-          <div>
-            <strong>{profile.full_name}</strong>
-            <span>{role}</span>
-          </div>
-        </div>
+<div className="sidebar-profile-card">
+  <div className="user-avatar">{displayInitials}</div>
+  <div>
+    <strong>{displayName}</strong>
+    <span>{role}</span>
+  </div>
+</div>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
