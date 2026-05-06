@@ -86,19 +86,22 @@ export default function Dashboard() {
     bio: "",
   });
 
-  const [profileMessage, setProfileMessage] = useState("");
-  const [profileSaving, setProfileSaving] = useState(false);
+const [profileMessage, setProfileMessage] = useState("");
+const [profileSaving, setProfileSaving] = useState(false);
 
-  const [pitches, setPitches] = useState([]);
-  const [interests, setInterests] = useState([]);
-  const [watchlist, setWatchlist] = useState([]);
+const [pitches, setPitches] = useState([]);
+const [interests, setInterests] = useState([]);
+const [watchlist, setWatchlist] = useState([]);
 
-  const [pitchForm, setPitchForm] = useState(emptyPitchForm);
-  const [editingPitchId, setEditingPitchId] = useState(null);
-  const [pitchSaving, setPitchSaving] = useState(false);
-  const [pitchMessage, setPitchMessage] = useState("");
-  const [verificationMessage, setVerificationMessage] = useState("");
-  const [verificationSaving, setVerificationSaving] = useState(false);
+const [pitchForm, setPitchForm] = useState(emptyPitchForm);
+const [editingPitchId, setEditingPitchId] = useState(null);
+const [pitchSaving, setPitchSaving] = useState(false);
+const [pitchMessage, setPitchMessage] = useState("");
+const [verificationMessage, setVerificationMessage] = useState("");
+const [verificationSaving, setVerificationSaving] = useState(false);
+const [deals, setDeals] = useState([]);
+const [dealMessage, setDealMessage] = useState("");
+const [dealSavingId, setDealSavingId] = useState(null);
 
 const user = session?.user || null;
 const email = user?.email || "";
@@ -302,6 +305,46 @@ useEffect(() => {
 
     loadWatchlist();
   }, [user]);
+  useEffect(() => {
+  if (!user) return;
+
+  async function loadDeals() {
+    const { data, error } = await supabase
+      .from("deals")
+      .select(
+        `
+        id,
+        pitch_id,
+        interest_id,
+        founder_id,
+        investor_id,
+        investor_email,
+        investor_name,
+        title,
+        stage,
+        amount,
+        notes,
+        created_at,
+        updated_at,
+        pitches (
+          startup_name,
+          industry
+        )
+      `
+      )
+      .or(`founder_id.eq.${user.id},investor_id.eq.${user.id}`)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Deals load error:", error.message);
+      return;
+    }
+
+    setDeals(data || []);
+  }
+
+  loadDeals();
+}, [user]);
 
   useEffect(() => {
     if (!navItems.some((item) => item.label === selectedSection)) {
@@ -1023,14 +1066,20 @@ function handleDeleteVerificationData() {
 }
 
   function renderPitches() {
-    return (
-      <section className="dashboard-content-grid">
-        <form className="dashboard-panel large" onSubmit={handleSavePitch}>
-          <div className="dashboard-panel-head">
-            <h3>{editingPitchId ? "Edit Pitch" : "Create Pitch"}</h3>
-            <span>Founder Tool</span>
-          </div>
+  return (
+    <section className="dashboard-content-grid">
+      <form className="dashboard-panel large pitch-builder-panel" onSubmit={handleSavePitch}>
+        <div className="dashboard-panel-head">
+          <h3>{editingPitchId ? "Edit Pitch" : "Create Startup Pitch"}</h3>
+          <span>{editingPitchId ? "Editing" : "Founder Tool"}</span>
+        </div>
 
+        <p className="pitch-detail-muted">
+          Create a clear startup pitch investors can understand quickly. Keep it
+          short, specific, and focused on traction.
+        </p>
+
+        <div className="pitch-form-grid">
           <div className="field-group">
             <label>Startup Name</label>
             <input
@@ -1042,7 +1091,7 @@ function handleDeleteVerificationData() {
                   startup_name: e.target.value,
                 }))
               }
-              placeholder="Example: SolarGrid AI"
+              placeholder="Example: AngelPort"
             />
           </div>
 
@@ -1057,26 +1106,28 @@ function handleDeleteVerificationData() {
                   industry: e.target.value,
                 }))
               }
-              placeholder="Example: Clean Energy, AI, Fintech"
+              placeholder="Example: Fintech, AI, Health, Clean Energy"
             />
           </div>
+        </div>
 
-          <div className="field-group">
-            <label>Short Description</label>
-            <textarea
-              className="waitlist-input"
-              value={pitchForm.short_description}
-              onChange={(e) =>
-                setPitchForm((prev) => ({
-                  ...prev,
-                  short_description: e.target.value,
-                }))
-              }
-              placeholder="Briefly explain what your startup does"
-              rows={4}
-            />
-          </div>
+        <div className="field-group">
+          <label>Short Description</label>
+          <textarea
+            className="waitlist-input"
+            value={pitchForm.short_description}
+            onChange={(e) =>
+              setPitchForm((prev) => ({
+                ...prev,
+                short_description: e.target.value,
+              }))
+            }
+            placeholder="Explain what your startup does in 1–2 sentences."
+            rows={4}
+          />
+        </div>
 
+        <div className="pitch-form-grid">
           <div className="field-group">
             <label>Funding Goal</label>
             <input
@@ -1088,28 +1139,12 @@ function handleDeleteVerificationData() {
                   funding_goal: e.target.value,
                 }))
               }
-              placeholder="Example: $500k seed round"
+              placeholder="Example: $50k, $500k, Seed Round"
             />
           </div>
 
           <div className="field-group">
-            <label>Traction</label>
-            <textarea
-              className="waitlist-input"
-              value={pitchForm.traction}
-              onChange={(e) =>
-                setPitchForm((prev) => ({
-                  ...prev,
-                  traction: e.target.value,
-                }))
-              }
-              placeholder="Revenue, users, pilots, waitlist, partnerships, etc."
-              rows={4}
-            />
-          </div>
-
-          <div className="field-group">
-            <label>Status</label>
+            <label>Visibility</label>
             <select
               className="waitlist-input"
               value={pitchForm.status}
@@ -1120,101 +1155,171 @@ function handleDeleteVerificationData() {
                 }))
               }
             >
-              <option value="draft">Draft</option>
-              <option value="public">Public</option>
+              <option value="draft">Draft - Private</option>
+              <option value="public">Public - Show in Discover</option>
             </select>
           </div>
+        </div>
 
-          {pitchMessage ? <p className="auth-message">{pitchMessage}</p> : null}
+        <div className="field-group">
+          <label>Traction</label>
+          <textarea
+            className="waitlist-input"
+            value={pitchForm.traction}
+            onChange={(e) =>
+              setPitchForm((prev) => ({
+                ...prev,
+                traction: e.target.value,
+              }))
+            }
+            placeholder="Example: users, waitlist, revenue, pilots, partnerships, prototypes, signed LOIs..."
+            rows={5}
+          />
+        </div>
 
-          <div className="pitch-actions">
-            <button className="primary-btn" disabled={pitchSaving}>
-              {pitchSaving
-                ? "Saving..."
-                : editingPitchId
-                  ? "Update Pitch"
-                  : "Create Pitch"}
+        <div className="pitch-status-helper">
+          <div>
+            <strong>Draft</strong>
+            <span>Only you can see it.</span>
+          </div>
+
+          <div>
+            <strong>Public</strong>
+            <span>Investors can find it in Discover.</span>
+          </div>
+        </div>
+
+        {pitchMessage ? <p className="auth-message">{pitchMessage}</p> : null}
+
+        <div className="pitch-actions">
+          <button className="primary-btn" disabled={pitchSaving}>
+            {pitchSaving
+              ? "Saving..."
+              : editingPitchId
+                ? "Update Pitch"
+                : "Create Pitch"}
+          </button>
+
+          {editingPitchId ? (
+            <button
+              type="button"
+              className="secondary-btn"
+              onClick={handleCancelPitchEdit}
+            >
+              Cancel Editing
             </button>
+          ) : null}
+        </div>
+      </form>
 
-            {editingPitchId ? (
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={handleCancelPitchEdit}
-              >
-                Cancel
-              </button>
-            ) : null}
-          </div>
-        </form>
+      <div className="dashboard-panel pitch-library-card">
+        <div className="dashboard-panel-head">
+          <h3>Pitch Library</h3>
+          <span>{pitches.length}</span>
+        </div>
 
-        <div className="dashboard-panel">
-          <div className="dashboard-panel-head">
-            <h3>My Pitches</h3>
-            <span>{pitches.length}</span>
+        <div className="pitch-mini-stats">
+          <div>
+            <strong>{pitches.length}</strong>
+            <span>Total</span>
           </div>
 
-          {pitches.length === 0 ? (
-            <div className="focus-list">
-              <div className="focus-row">
-                <strong>No pitches yet</strong>
-                <span>Create your first startup pitch to see it here.</span>
-              </div>
-            </div>
-          ) : (
-            <div className="focus-list">
-              {pitches.map((pitch) => (
-                <div key={pitch.id} className="focus-row pitch-list-item">
-                  <div className="pitch-list-top">
-                    <strong>{pitch.startup_name}</strong>
+          <div>
+            <strong>{publicPitches}</strong>
+            <span>Public</span>
+          </div>
+
+          <div>
+            <strong>{draftPitches}</strong>
+            <span>Drafts</span>
+          </div>
+        </div>
+
+        {pitches.length === 0 ? (
+          <div className="pitch-empty-state">
+            <h4>No pitches yet</h4>
+            <p>
+              Create your first pitch on the left. Start as a draft, then publish
+              when you are ready.
+            </p>
+          </div>
+        ) : (
+          <div className="pitch-library-list">
+            {pitches.map((pitch) => (
+              <article key={pitch.id} className="pitch-library-item">
+                <div className="pitch-library-top">
+                  <div>
                     <span className="pitch-status-badge">
                       {formatStatus(pitch.status)}
                     </span>
-                  </div>
-
-                  <span>{pitch.short_description}</span>
-
-                  <span>
-                    {pitch.industry || "No industry"}
-                    {pitch.funding_goal ? ` • ${pitch.funding_goal}` : ""}
-                  </span>
-
-                  <span>{pitch.traction || "No traction listed"}</span>
-
-                  <div className="pitch-actions">
-                    <button
-                      type="button"
-                      className="secondary-btn pitch-edit-btn"
-                      onClick={() => handleEditPitch(pitch)}
-                    >
-                      Edit Pitch
-                    </button>
-
-                    {pitch.status === "public" ? (
-                      <Link
-                        to={`/pitch/${pitch.id}`}
-                        className="secondary-btn pitch-edit-btn"
-                      >
-                        View Public Page
-                      </Link>
-                    ) : null}
-
-                    <button
-                      type="button"
-                      className="secondary-btn pitch-delete-btn"
-                      onClick={() => handleDeletePitch(pitch.id)}
-                    >
-                      Delete Pitch
-                    </button>
+                    <h4>{pitch.startup_name}</h4>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  }
+
+                <p>{pitch.short_description}</p>
+
+                <div className="discover-meta">
+                  <span>{pitch.industry || "No industry"}</span>
+                  {pitch.funding_goal ? <span>{pitch.funding_goal}</span> : null}
+                </div>
+
+                <div className="pitch-library-traction">
+                  <strong>Traction</strong>
+                  <span>{pitch.traction || "No traction listed yet."}</span>
+                </div>
+
+                <div className="pitch-actions">
+                  <button
+                    type="button"
+                    className="secondary-btn pitch-edit-btn"
+                    onClick={() => handleEditPitch(pitch)}
+                  >
+                    Edit
+                  </button>
+
+                  {pitch.status === "public" ? (
+                    <Link
+                      to={`/pitch/${pitch.id}`}
+                      className="secondary-btn pitch-edit-btn"
+                    >
+                      View Public Page
+                    </Link>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="secondary-btn pitch-delete-btn"
+                    onClick={() => {
+                      const confirmed = window.confirm(
+                        "Delete this pitch? This cannot be undone."
+                      );
+
+                      if (confirmed) {
+                        handleDeletePitch(pitch.id);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {publicPitches > 0 ? (
+          <button
+            type="button"
+            className="primary-btn full-btn pitch-discover-button"
+            onClick={() => navigate("/discover")}
+          >
+            View in Discover
+          </button>
+        ) : null}
+      </div>
+    </section>
+  );
+}
 
   function renderWatchlist() {
     return (
@@ -1980,6 +2085,365 @@ function renderAnalytics() {
   );
 }
 
+useEffect(() => {
+  if (!user) return;
+
+  async function loadInterests() {
+    console.log("Loading investor interest for founder:", user.id, user.email);
+
+    const { data, error } = await supabase
+      .from("pitch_interests")
+      .select(
+        `
+        id,
+        pitch_id,
+        founder_id,
+        interested_user_id,
+        interested_email,
+        interested_name,
+        message,
+        reviewed,
+        reviewed_at,
+        created_at,
+        pitches (
+          startup_name,
+          industry
+        )
+      `
+      )
+      .eq("founder_id", user.id)
+      .order("created_at", { ascending: false });
+
+    console.log("Investor interest data:", data);
+    console.log("Investor interest error:", error);
+
+    if (error) {
+      console.error("Investor interest load error:", error.message);
+      setInterests([]);
+      return;
+    }
+
+    setInterests(data || []);
+  }
+
+  loadInterests();
+}, [user]);
+
+function renderDeals() {
+  const verificationStatus = profile.verification_status || "Not Verified";
+
+  const stageOptions = [
+    { key: "interest", label: "Interest" },
+    { key: "conversation", label: "Conversation" },
+    { key: "offer", label: "Offer" },
+    { key: "agreement", label: "Agreement" },
+    { key: "closed", label: "Closed" },
+    { key: "lost", label: "Lost" },
+  ];
+
+  const dealStages = stageOptions.map((stage) => ({
+    ...stage,
+    value: deals.filter((deal) => deal.stage === stage.key).length,
+  }));
+
+  const interestsWithoutDeals = interests.filter(
+    (interest) => !deals.some((deal) => deal.interest_id === interest.id)
+  );
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Deals</h3>
+          <span>{deals.length} active</span>
+        </div>
+
+        <p className="pitch-detail-muted">
+          Turn investor interest into real deal records and track each opportunity
+          from first contact to offer, agreement, or close.
+        </p>
+
+        <div className="deal-stage-grid">
+          {dealStages.map((stage, index) => (
+            <div className="deal-stage-card" key={stage.key}>
+              <div className="deal-stage-number">{index + 1}</div>
+
+              <div>
+                <h4>{stage.label}</h4>
+                <strong>{stage.value}</strong>
+                <p>
+                  {stage.key === "interest" &&
+                    "New investor interest that became a deal."}
+                  {stage.key === "conversation" &&
+                    "You are talking with the investor."}
+                  {stage.key === "offer" &&
+                    "An offer or term discussion is active."}
+                  {stage.key === "agreement" &&
+                    "Agreement or contract discussion is active."}
+                  {stage.key === "closed" &&
+                    "Deal was successfully completed."}
+                  {stage.key === "lost" &&
+                    "Deal is no longer moving forward."}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="deal-list">
+          <div className="dashboard-panel-head">
+            <h3>Deal Records</h3>
+            <span>Supabase</span>
+          </div>
+
+          {dealMessage ? <p className="auth-message">{dealMessage}</p> : null}
+
+          {deals.length === 0 ? (
+            <div className="pitch-empty-state">
+              <h4>No deals yet</h4>
+              <p>
+                When an investor contacts you, create a deal from that investor
+                interest and track it here.
+              </p>
+            </div>
+          ) : (
+            deals.map((deal) => (
+              <article className="deal-record-card" key={deal.id}>
+                <div className="deal-record-top">
+                  <div>
+                    <span className="pitch-status-badge">
+                      {formatStatus(deal.stage)}
+                    </span>
+                    <h4>{deal.title}</h4>
+                  </div>
+
+                  <select
+                    className="deal-stage-select"
+                    value={deal.stage}
+                    disabled={dealSavingId === deal.id}
+                    onChange={(e) =>
+                      handleUpdateDealStage(deal.id, e.target.value)
+                    }
+                  >
+                    {stageOptions.map((stage) => (
+                      <option key={stage.key} value={stage.key}>
+                        {stage.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="focus-list">
+                  <div className="focus-row">
+                    <strong>Pitch</strong>
+                    <span>{deal.pitches?.startup_name || "Unknown pitch"}</span>
+                  </div>
+
+                  <div className="focus-row">
+                    <strong>Investor</strong>
+                    <span>
+                      {deal.investor_name || "AngelPort User"}
+                      {deal.investor_email ? ` • ${deal.investor_email}` : ""}
+                    </span>
+                  </div>
+
+                  <div className="focus-row">
+                    <strong>Notes</strong>
+                    <span>{deal.notes || "No notes yet."}</span>
+                  </div>
+                </div>
+              </article>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Create Deals</h3>
+          <span>From Interest</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Founder Profile</strong>
+            <span>{displayName}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Verification</strong>
+            <span>{verificationStatus}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Investor Interest</strong>
+            <span>{interests.length}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Deals Created</strong>
+            <span>{deals.length}</span>
+          </div>
+        </div>
+
+        <div className="deal-source-list">
+          <h4>Unconverted Interest</h4>
+
+          {interestsWithoutDeals.length === 0 ? (
+            <p className="pitch-detail-muted">
+              No investor interest waiting to become a deal.
+            </p>
+          ) : (
+            interestsWithoutDeals.map((interest) => (
+              <div className="deal-source-card" key={interest.id}>
+                <strong>
+                  {interest.interested_name || "AngelPort Investor"}
+                </strong>
+
+                <span>
+                  Pitch: {interest.pitches?.startup_name || "Unknown pitch"}
+                </span>
+
+                <p>
+                  {interest.message ||
+                    "Investor is interested in learning more."}
+                </p>
+
+                <button
+                  type="button"
+                  className="primary-btn full-btn"
+                  disabled={dealSavingId === interest.id}
+                  onClick={() => handleCreateDealFromInterest(interest)}
+                >
+                  {dealSavingId === interest.id
+                    ? "Creating..."
+                    : "Create Deal"}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function handleCreateDealFromInterest(interest) {
+  if (!user || !interest) return;
+
+  setDealMessage("");
+  setDealSavingId(interest.id);
+
+  const existingDeal = deals.find((deal) => deal.interest_id === interest.id);
+
+  if (existingDeal) {
+    setDealMessage("A deal already exists for this investor interest.");
+    setDealSavingId(null);
+    return;
+  }
+
+  const startupName = interest.pitches?.startup_name || "Startup pitch";
+
+  const { data, error } = await supabase
+    .from("deals")
+    .insert({
+      pitch_id: interest.pitch_id,
+      interest_id: interest.id,
+      founder_id: user.id,
+      investor_id: interest.interested_user_id || null,
+      investor_email: interest.interested_email || "",
+      investor_name: interest.interested_name || "AngelPort User",
+      title: `${startupName} deal conversation`,
+      stage: "interest",
+      notes:
+        interest.message ||
+        "Investor expressed interest through the Contact Founder button.",
+    })
+    .select(
+      `
+      id,
+      pitch_id,
+      interest_id,
+      founder_id,
+      investor_id,
+      investor_email,
+      investor_name,
+      title,
+      stage,
+      amount,
+      notes,
+      created_at,
+      updated_at,
+      pitches (
+        startup_name,
+        industry
+      )
+    `
+    )
+    .single();
+
+  setDealSavingId(null);
+
+  if (error) {
+    setDealMessage(error.message);
+    return;
+  }
+
+  setDeals((prev) => [data, ...prev]);
+  setDealMessage("Deal created from investor interest.");
+}
+
+async function handleUpdateDealStage(dealId, nextStage) {
+  if (!user) return;
+
+  setDealMessage("");
+  setDealSavingId(dealId);
+
+  const { data, error } = await supabase
+    .from("deals")
+    .update({
+      stage: nextStage,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", dealId)
+    .eq("founder_id", user.id)
+    .select(
+      `
+      id,
+      pitch_id,
+      interest_id,
+      founder_id,
+      investor_id,
+      investor_email,
+      investor_name,
+      title,
+      stage,
+      amount,
+      notes,
+      created_at,
+      updated_at,
+      pitches (
+        startup_name,
+        industry
+      )
+    `
+    )
+    .single();
+
+  setDealSavingId(null);
+
+  if (error) {
+    setDealMessage(error.message);
+    return;
+  }
+
+  setDeals((prev) =>
+    prev.map((deal) => (deal.id === dealId ? data : deal))
+  );
+
+  setDealMessage("Deal stage updated.");
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -1995,14 +2459,7 @@ function renderAnalytics() {
         return isFounder ? renderInvestorInterest() : renderOverview();
 
       case "Deals":
-        return renderSimplePanel(
-          "Deals",
-          "Deal tracking will help founders and investors manage discussions, offers, and funding progress.",
-          [
-            { label: "Current Status", value: "Planned" },
-            { label: "Best Next Step", value: "Add offer tracking later" },
-          ]
-        );
+  return renderDeals();
 
       case "Analytics":
   return renderAnalytics();

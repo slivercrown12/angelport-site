@@ -3154,3 +3154,246 @@ button {
     grid-template-columns: 1fr;
   }
 }
+.deal-stage-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.deal-stage-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.deal-stage-number {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 900;
+  color: #ddd6fe;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.deal-stage-card h4 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.deal-stage-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 2rem;
+  letter-spacing: -0.05em;
+}
+
+.deal-stage-card p {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.55;
+}
+.pitch-builder-panel {
+  min-height: 680px;
+}
+
+.pitch-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.pitch-status-helper {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.pitch-status-helper div {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(167, 139, 250, 0.18);
+}
+
+.pitch-status-helper strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.pitch-status-helper span {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.pitch-library-card {
+  min-height: 680px;
+}
+
+.pitch-mini-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.pitch-mini-stats div {
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pitch-mini-stats strong {
+  display: block;
+  font-size: 2rem;
+  letter-spacing: -0.05em;
+}
+
+.pitch-mini-stats span {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.pitch-empty-state {
+  padding: 26px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+}
+
+.pitch-empty-state h4 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.pitch-empty-state p {
+  margin: 0;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.pitch-library-list {
+  display: grid;
+  gap: 18px;
+}
+
+.pitch-library-item {
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pitch-library-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.pitch-library-item h4 {
+  margin: 12px 0 10px;
+  font-size: 1.45rem;
+  letter-spacing: -0.04em;
+}
+
+.pitch-library-item p {
+  margin: 0 0 14px;
+  color: rgba(255, 255, 255, 0.72);
+  line-height: 1.55;
+}
+
+.pitch-library-traction {
+  margin: 18px 0;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.pitch-library-traction strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.pitch-library-traction span {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.pitch-discover-button {
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .pitch-form-grid,
+  .pitch-status-helper,
+  .pitch-mini-stats {
+    grid-template-columns: 1fr;
+  }
+}
+.deal-list {
+  margin-top: 34px;
+}
+
+.deal-record-card,
+.deal-source-card {
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 18px;
+}
+
+.deal-record-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.deal-record-top h4 {
+  margin: 12px 0 0;
+  font-size: 1.35rem;
+}
+
+.deal-stage-select {
+  min-width: 170px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  color: white;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-weight: 800;
+}
+
+.deal-source-list {
+  margin-top: 30px;
+}
+
+.deal-source-list h4 {
+  margin: 0 0 16px;
+}
+
+.deal-source-card strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.deal-source-card span {
+  display: block;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.deal-source-card p {
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.55;
+}
