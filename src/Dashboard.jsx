@@ -102,6 +102,11 @@ const [verificationSaving, setVerificationSaving] = useState(false);
 const [deals, setDeals] = useState([]);
 const [dealMessage, setDealMessage] = useState("");
 const [dealSavingId, setDealSavingId] = useState(null);
+const [conversations, setConversations] = useState([]);
+const [selectedConversationId, setSelectedConversationId] = useState(null);
+const [messageDraft, setMessageDraft] = useState("");
+const [messageStatus, setMessageStatus] = useState("");
+const [messageSaving, setMessageSaving] = useState(false);
 
 const user = session?.user || null;
 const email = user?.email || "";
@@ -154,6 +159,51 @@ const navItems = [
   { icon: Settings, label: "Settings", show: true },
   { icon: CircleHelp, label: "Help Center", show: true },
 ].filter((item) => item.show);
+
+useEffect(() => {
+  if (!user) return;
+
+  async function loadConversations() {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select(
+        `
+        id,
+        pitch_id,
+        interest_id,
+        founder_id,
+        investor_id,
+        investor_email,
+        investor_name,
+        status,
+        created_at,
+        updated_at,
+        pitches (
+          startup_name,
+          industry
+        ),
+        conversation_messages (
+          id,
+          sender_id,
+          body,
+          created_at
+        )
+      `
+      )
+      .or(`founder_id.eq.${user.id},investor_id.eq.${user.id}`)
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      console.error("Conversations load error:", error.message);
+      setConversations([]);
+      return;
+    }
+
+    setConversations(data || []);
+  }
+
+  loadConversations();
+}, [user]);
 
 useEffect(() => {
   if (!user) return;
@@ -1484,7 +1534,13 @@ function handleDeleteVerificationData() {
                           interest.interested_name || "there"
                         },%0D%0A%0D%0AThanks for your interest in my pitch on AngelPort.`}
                       >
-                        Reply by Email
+                        <button
+  type="button"
+  className="secondary-btn"
+  onClick={() => handleOpenConversationFromInterest(interest)}
+>
+  Open Chat
+</button>
                       </a>
                     ) : null}
 
@@ -2129,6 +2185,125 @@ useEffect(() => {
   loadInterests();
 }, [user]);
 
+async function handleSendMessage(conversationId) {
+  if (!user || !conversationId) return;
+
+  const cleanMessage = messageDraft.trim();
+
+  if (!cleanMessage) {
+    setMessageStatus("Write a message first.");
+    return;
+  }
+
+  setMessageSaving(true);
+  setMessageStatus("");
+
+  const { data, error } = await supabase
+    .from("conversation_messages")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: user.id,
+      body: cleanMessage,
+    })
+    .select("id, conversation_id, sender_id, body, created_at")
+    .single();
+
+  if (error) {
+    setMessageSaving(false);
+    setMessageStatus(error.message);
+    return;
+  }
+
+  await supabase
+    .from("conversations")
+    .update({
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", conversationId);
+
+  setConversations((prev) =>
+    prev.map((conversation) => {
+      if (conversation.id !== conversationId) return conversation;
+
+      return {
+        ...conversation,
+        updated_at: new Date().toISOString(),
+        conversation_messages: [
+          ...(conversation.conversation_messages || []),
+          data,
+        ],
+      };
+    })
+  );
+
+  setMessageDraft("");
+  setMessageStatus("Message sent.");
+  setMessageSaving(false);
+}
+
+async function handleOpenConversationFromInterest(interest) {
+  if (!user || !interest) return;
+
+  const existingConversation = conversations.find(
+    (conversation) =>
+      conversation.interest_id === interest.id ||
+      (conversation.pitch_id === interest.pitch_id &&
+        conversation.investor_id === interest.interested_user_id)
+  );
+
+  if (existingConversation) {
+    setSelectedConversationId(existingConversation.id);
+    setSelectedSection("Messages");
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("conversations")
+    .insert({
+      pitch_id: interest.pitch_id,
+      interest_id: interest.id,
+      founder_id: user.id,
+      investor_id: interest.interested_user_id,
+      investor_email: interest.interested_email || "",
+      investor_name: interest.interested_name || "AngelPort Investor",
+      status: "open",
+    })
+    .select(
+      `
+      id,
+      pitch_id,
+      interest_id,
+      founder_id,
+      investor_id,
+      investor_email,
+      investor_name,
+      status,
+      created_at,
+      updated_at,
+      pitches (
+        startup_name,
+        industry
+      ),
+      conversation_messages (
+        id,
+        sender_id,
+        body,
+        created_at
+      )
+    `
+    )
+    .single();
+
+  if (error) {
+    setMessageStatus(error.message);
+    return;
+  }
+
+  setConversations((prev) => [data, ...prev]);
+  setSelectedConversationId(data.id);
+  setSelectedSection("Messages");
+}
+
 function renderDeals() {
   const verificationStatus = profile.verification_status || "Not Verified";
 
@@ -2444,6 +2619,164 @@ async function handleUpdateDealStage(dealId, nextStage) {
   setDealMessage("Deal stage updated.");
 }
 
+function renderMessages() {
+  const selectedConversation =
+    conversations.find(
+      (conversation) => conversation.id === selectedConversationId
+    ) || conversations[0];
+
+  const messages = selectedConversation?.conversation_messages
+    ? [...selectedConversation.conversation_messages].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      )
+    : [];
+
+  return (
+    <section className="dashboard-content-grid">
+      <div className="dashboard-panel large">
+        <div className="dashboard-panel-head">
+          <h3>Messages</h3>
+          <span>{conversations.length}</span>
+        </div>
+
+        {conversations.length === 0 ? (
+          <div className="pitch-empty-state">
+            <h4>No conversations yet</h4>
+            <p>
+              When an investor contacts a founder, a conversation can be opened
+              here.
+            </p>
+          </div>
+        ) : (
+          <div className="message-layout">
+            <div className="message-thread-list">
+              {conversations.map((conversation) => (
+                <button
+                  key={conversation.id}
+                  type="button"
+                  className={
+                    selectedConversation?.id === conversation.id
+                      ? "message-thread-item active"
+                      : "message-thread-item"
+                  }
+                  onClick={() => setSelectedConversationId(conversation.id)}
+                >
+                  <strong>
+                    {conversation.pitches?.startup_name || "Pitch conversation"}
+                  </strong>
+                  <span>{conversation.investor_name || "AngelPort User"}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="message-chat-panel">
+              <div className="message-chat-header">
+                <div>
+                  <h4>
+                    {selectedConversation?.pitches?.startup_name ||
+                      "Conversation"}
+                  </h4>
+                  <p>
+                    {selectedConversation?.investor_name || "AngelPort User"} •{" "}
+                    {selectedConversation?.investor_email || "No email"}
+                  </p>
+                </div>
+
+                <span className="pitch-status-badge">
+                  {selectedConversation?.status || "open"}
+                </span>
+              </div>
+
+              <div className="message-bubbles">
+                {messages.length === 0 ? (
+                  <p className="pitch-detail-muted">
+                    No messages yet. Send the first message below.
+                  </p>
+                ) : (
+                  messages.map((message) => {
+                    const isMine = message.sender_id === user.id;
+
+                    return (
+                      <div
+                        key={message.id}
+                        className={
+                          isMine
+                            ? "message-bubble mine"
+                            : "message-bubble theirs"
+                        }
+                      >
+                        <p>{message.body}</p>
+                        <span>
+                          {new Date(message.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {messageStatus ? (
+                <p className="auth-message">{messageStatus}</p>
+              ) : null}
+
+              <div className="message-compose">
+                <textarea
+                  className="waitlist-input"
+                  value={messageDraft}
+                  onChange={(e) => setMessageDraft(e.target.value)}
+                  placeholder="Write your message..."
+                  rows={4}
+                />
+
+                <button
+                  type="button"
+                  className="primary-btn"
+                  disabled={messageSaving || !selectedConversation}
+                  onClick={() => handleSendMessage(selectedConversation.id)}
+                >
+                  {messageSaving ? "Sending..." : "Send Message"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="dashboard-panel">
+        <div className="dashboard-panel-head">
+          <h3>Message Status</h3>
+          <span>Real</span>
+        </div>
+
+        <div className="focus-list">
+          <div className="focus-row">
+            <strong>Total Conversations</strong>
+            <span>{conversations.length}</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Selected Pitch</strong>
+            <span>
+              {selectedConversation?.pitches?.startup_name ||
+                "No conversation selected"}
+            </span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Storage</strong>
+            <span>Messages are saved in Supabase.</span>
+          </div>
+
+          <div className="focus-row">
+            <strong>Privacy</strong>
+            <span>Only the founder and investor in the conversation can read it.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
   function renderMainContent() {
     switch (selectedSection) {
       case "Profile":
@@ -2457,6 +2790,9 @@ async function handleUpdateDealStage(dealId, nextStage) {
 
       case "Investor Interest":
         return isFounder ? renderInvestorInterest() : renderOverview();
+
+        case "Messages":
+  return renderMessages();
 
       case "Deals":
   return renderDeals();

@@ -120,6 +120,23 @@ export default function PitchDetail() {
       return;
     }
 
+    const { data: existingInterest, error: existingInterestError } = await supabase
+  .from("pitch_interests")
+  .select("id")
+  .eq("pitch_id", pitch.id)
+  .eq("interested_user_id", session.user.id)
+  .maybeSingle();
+
+if (existingInterestError) {
+  setInterestMessage(existingInterestError.message);
+  return;
+}
+
+if (existingInterest) {
+  setInterestMessage("You already contacted this founder for this pitch.");
+  return;
+}
+
     setInterestSaving(true);
 
     const interestedName =
