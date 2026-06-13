@@ -93,6 +93,7 @@ const [profileSaving, setProfileSaving] = useState(false);
 const [pitches, setPitches] = useState([]);
 const [interests, setInterests] = useState([]);
 const [watchlist, setWatchlist] = useState([]);
+const [notifications, setNotifications] = useState([]);
 
 const [pitchForm, setPitchForm] = useState(emptyPitchForm);
 const [editingPitchId, setEditingPitchId] = useState(null);
