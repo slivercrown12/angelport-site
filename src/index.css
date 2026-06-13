@@ -3505,3 +3505,299 @@ button {
     grid-template-columns: 1fr;
   }
 }
+.premium-message-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 24px;
+}
+
+.premium-message-shell {
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  min-height: 720px;
+  border-radius: 34px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.22), transparent 34%),
+    rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+}
+
+.premium-message-sidebar {
+  padding: 26px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.premium-message-head,
+.premium-chat-topbar,
+.premium-thread-top,
+.premium-compose-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.premium-kicker {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(221, 214, 254, 0.72);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.premium-message-head h3,
+.premium-chat-topbar h3 {
+  margin: 0;
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.premium-count-pill,
+.premium-open-pill {
+  padding: 9px 14px;
+  border-radius: 999px;
+  color: #ddd6fe;
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  font-weight: 900;
+}
+
+.premium-thread-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 26px;
+}
+
+.premium-thread-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px;
+  border-radius: 24px;
+  text-align: left;
+  color: white;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.premium-thread-card:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.065);
+  border-color: rgba(167, 139, 250, 0.24);
+}
+
+.premium-thread-card.active {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28), rgba(109, 40, 217, 0.12));
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 18px 50px rgba(109, 40, 217, 0.2);
+}
+
+.premium-thread-avatar,
+.premium-chat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 1000;
+  color: white;
+  background: linear-gradient(135deg, #ef4444, #6d28d9);
+  box-shadow: 0 16px 40px rgba(109, 40, 217, 0.28);
+}
+
+.premium-thread-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.premium-thread-top strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.premium-thread-top span {
+  font-size: 0.72rem;
+  color: #ddd6fe;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.premium-thread-main p,
+.premium-thread-main small {
+  display: block;
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.premium-chat-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 28px;
+}
+
+.premium-chat-topbar {
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.premium-chat-person {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.premium-chat-topbar p {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.premium-message-stream {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 26px 4px;
+  overflow-y: auto;
+  min-height: 360px;
+  max-height: 460px;
+}
+
+.premium-message-row {
+  display: flex;
+}
+
+.premium-message-row.mine {
+  justify-content: flex-end;
+}
+
+.premium-message-row.theirs {
+  justify-content: flex-start;
+}
+
+.premium-message-bubble {
+  max-width: 68%;
+  padding: 16px 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.premium-message-row.mine .premium-message-bubble {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.85), rgba(109, 40, 217, 0.75));
+  box-shadow: 0 18px 48px rgba(109, 40, 217, 0.28);
+}
+
+.premium-message-row.theirs .premium-message-bubble {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.premium-message-bubble p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.premium-message-bubble span {
+  display: block;
+  margin-top: 9px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 0.78rem;
+}
+
+.premium-compose-box {
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.premium-compose-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  padding: 16px;
+  border-radius: 20px;
+  color: white;
+  outline: none;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.premium-compose-input:focus {
+  border-color: rgba(167, 139, 250, 0.55);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+}
+
+.premium-compose-actions {
+  margin-top: 14px;
+}
+
+.premium-compose-actions span,
+.premium-message-status {
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.premium-empty-card,
+.premium-empty-chat {
+  margin-top: 26px;
+  padding: 24px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+}
+
+.premium-empty-chat.full {
+  margin: auto;
+  max-width: 420px;
+  text-align: center;
+}
+
+.premium-empty-card h4,
+.premium-empty-chat h4 {
+  margin: 0 0 10px;
+}
+
+.premium-empty-card p,
+.premium-empty-chat p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.6;
+}
+
+@media (max-width: 1250px) {
+  .premium-message-page {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-message-info {
+    order: 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .premium-message-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-message-sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .premium-message-bubble {
+    max-width: 88%;
+  }
+}

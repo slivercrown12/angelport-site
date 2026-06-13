@@ -33,6 +33,7 @@ const validSections = [
   "Watchlist",
   "Discover",
   "Investor Interest",
+  "Messages",
   "Deals",
   "Analytics",
   "Verification",
@@ -153,6 +154,7 @@ const navItems = [
   { icon: Star, label: "Watchlist", show: isInvestor },
   { icon: Search, label: "Discover", show: isInvestor },
   { icon: Mail, label: "Investor Interest", show: isFounder },
+  { icon: Mail, label: "Messages", show: true },
   { icon: Handshake, label: "Deals", show: true },
   { icon: BarChart3, label: "Analytics", show: true },
   { icon: BadgeCheck, label: "Verification", show: true },
@@ -1525,24 +1527,13 @@ function handleDeleteVerificationData() {
                   </span>
 
                   <div className="pitch-actions">
-                    {interest.interested_email ? (
-                      <a
-                        className="secondary-btn pitch-edit-btn"
-                        href={`mailto:${
-                          interest.interested_email
-                        }?subject=AngelPort pitch follow-up&body=Hi ${
-                          interest.interested_name || "there"
-                        },%0D%0A%0D%0AThanks for your interest in my pitch on AngelPort.`}
-                      >
-                        <button
+<button
   type="button"
-  className="secondary-btn"
+  className="secondary-btn pitch-edit-btn"
   onClick={() => handleOpenConversationFromInterest(interest)}
 >
   Open Chat
 </button>
-                      </a>
-                    ) : null}
 
                     {!interest.reviewed ? (
                       <button
@@ -2244,6 +2235,16 @@ async function handleSendMessage(conversationId) {
 async function handleOpenConversationFromInterest(interest) {
   if (!user || !interest) return;
 
+  setMessageStatus("");
+
+  if (!interest.interested_user_id) {
+    setMessageStatus(
+      "This investor interest is missing a signed-in investor account, so chat cannot be opened."
+    );
+    setSelectedSection("Messages");
+    return;
+  }
+
   const existingConversation = conversations.find(
     (conversation) =>
       conversation.interest_id === interest.id ||
@@ -2295,7 +2296,9 @@ async function handleOpenConversationFromInterest(interest) {
     .single();
 
   if (error) {
+    console.error("Conversation create error:", error.message);
     setMessageStatus(error.message);
+    setSelectedSection("Messages");
     return;
   }
 
@@ -2631,67 +2634,116 @@ function renderMessages() {
       )
     : [];
 
+  const selectedPitchName =
+    selectedConversation?.pitches?.startup_name || "Conversation";
+
+  const selectedInvestorName =
+    selectedConversation?.investor_name || "AngelPort User";
+
+  const selectedInvestorEmail =
+    selectedConversation?.investor_email || "No email saved";
+
   return (
-    <section className="dashboard-content-grid">
-      <div className="dashboard-panel large">
-        <div className="dashboard-panel-head">
-          <h3>Messages</h3>
-          <span>{conversations.length}</span>
+    <section className="premium-message-page">
+      <div className="premium-message-shell">
+        <div className="premium-message-sidebar">
+          <div className="premium-message-head">
+            <div>
+              <span className="premium-kicker">Inbox</span>
+              <h3>Messages</h3>
+            </div>
+            <span className="premium-count-pill">{conversations.length}</span>
+          </div>
+
+          {conversations.length === 0 ? (
+            <div className="premium-empty-card">
+              <h4>No conversations yet</h4>
+              <p>
+                Open a chat from Investor Interest to start a real Supabase
+                conversation.
+              </p>
+            </div>
+          ) : (
+            <div className="premium-thread-list">
+              {conversations.map((conversation) => {
+                const isActive = selectedConversation?.id === conversation.id;
+                const pitchName =
+                  conversation.pitches?.startup_name || "Pitch conversation";
+                const investorName =
+                  conversation.investor_name || "AngelPort User";
+                const lastMessage =
+                  conversation.conversation_messages?.[
+                    conversation.conversation_messages.length - 1
+                  ];
+
+                return (
+                  <button
+                    key={conversation.id}
+                    type="button"
+                    className={
+                      isActive
+                        ? "premium-thread-card active"
+                        : "premium-thread-card"
+                    }
+                    onClick={() => setSelectedConversationId(conversation.id)}
+                  >
+                    <div className="premium-thread-avatar">
+                      {getInitials(investorName)}
+                    </div>
+
+                    <div className="premium-thread-main">
+                      <div className="premium-thread-top">
+                        <strong>{pitchName}</strong>
+                        <span>{conversation.status || "open"}</span>
+                      </div>
+
+                      <p>{investorName}</p>
+
+                      <small>
+                        {lastMessage?.body
+                          ? lastMessage.body
+                          : "No messages yet"}
+                      </small>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {conversations.length === 0 ? (
-          <div className="pitch-empty-state">
-            <h4>No conversations yet</h4>
-            <p>
-              When an investor contacts a founder, a conversation can be opened
-              here.
-            </p>
-          </div>
-        ) : (
-          <div className="message-layout">
-            <div className="message-thread-list">
-              {conversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  className={
-                    selectedConversation?.id === conversation.id
-                      ? "message-thread-item active"
-                      : "message-thread-item"
-                  }
-                  onClick={() => setSelectedConversationId(conversation.id)}
-                >
-                  <strong>
-                    {conversation.pitches?.startup_name || "Pitch conversation"}
-                  </strong>
-                  <span>{conversation.investor_name || "AngelPort User"}</span>
-                </button>
-              ))}
-            </div>
+        <div className="premium-chat-panel">
+          {selectedConversation ? (
+            <>
+              <div className="premium-chat-topbar">
+                <div className="premium-chat-person">
+                  <div className="premium-chat-avatar">
+                    {getInitials(selectedInvestorName)}
+                  </div>
 
-            <div className="message-chat-panel">
-              <div className="message-chat-header">
-                <div>
-                  <h4>
-                    {selectedConversation?.pitches?.startup_name ||
-                      "Conversation"}
-                  </h4>
-                  <p>
-                    {selectedConversation?.investor_name || "AngelPort User"} •{" "}
-                    {selectedConversation?.investor_email || "No email"}
-                  </p>
+                  <div>
+                    <span className="premium-kicker">Pitch Conversation</span>
+                    <h3>{selectedPitchName}</h3>
+                    <p>
+                      {selectedInvestorName} • {selectedInvestorEmail}
+                    </p>
+                  </div>
                 </div>
 
-                <span className="pitch-status-badge">
-                  {selectedConversation?.status || "open"}
+                <span className="premium-open-pill">
+                  {selectedConversation.status || "open"}
                 </span>
               </div>
 
-              <div className="message-bubbles">
+              <div className="premium-message-stream">
                 {messages.length === 0 ? (
-                  <p className="pitch-detail-muted">
-                    No messages yet. Send the first message below.
-                  </p>
+                  <div className="premium-empty-chat">
+                    <h4>Start the conversation</h4>
+                    <p>
+                      Send the first message. It will be saved in Supabase and
+                      visible only to this founder/investor conversation.
+                    </p>
+                  </div>
                 ) : (
                   messages.map((message) => {
                     const isMine = message.sender_id === user.id;
@@ -2701,14 +2753,16 @@ function renderMessages() {
                         key={message.id}
                         className={
                           isMine
-                            ? "message-bubble mine"
-                            : "message-bubble theirs"
+                            ? "premium-message-row mine"
+                            : "premium-message-row theirs"
                         }
                       >
-                        <p>{message.body}</p>
-                        <span>
-                          {new Date(message.created_at).toLocaleString()}
-                        </span>
+                        <div className="premium-message-bubble">
+                          <p>{message.body}</p>
+                          <span>
+                            {new Date(message.created_at).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     );
                   })
@@ -2716,33 +2770,42 @@ function renderMessages() {
               </div>
 
               {messageStatus ? (
-                <p className="auth-message">{messageStatus}</p>
+                <p className="premium-message-status">{messageStatus}</p>
               ) : null}
 
-              <div className="message-compose">
+              <div className="premium-compose-box">
                 <textarea
-                  className="waitlist-input"
+                  className="premium-compose-input"
                   value={messageDraft}
                   onChange={(e) => setMessageDraft(e.target.value)}
-                  placeholder="Write your message..."
+                  placeholder="Write a professional reply..."
                   rows={4}
                 />
 
-                <button
-                  type="button"
-                  className="primary-btn"
-                  disabled={messageSaving || !selectedConversation}
-                  onClick={() => handleSendMessage(selectedConversation.id)}
-                >
-                  {messageSaving ? "Sending..." : "Send Message"}
-                </button>
+                <div className="premium-compose-actions">
+                  <span>Saved securely in Supabase</span>
+
+                  <button
+                    type="button"
+                    className="primary-btn"
+                    disabled={messageSaving || !selectedConversation}
+                    onClick={() => handleSendMessage(selectedConversation.id)}
+                  >
+                    {messageSaving ? "Sending..." : "Send Message"}
+                  </button>
+                </div>
               </div>
+            </>
+          ) : (
+            <div className="premium-empty-chat full">
+              <h4>No conversation selected</h4>
+              <p>Choose a thread from the inbox to begin.</p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="dashboard-panel">
+      <div className="dashboard-panel premium-message-info">
         <div className="dashboard-panel-head">
           <h3>Message Status</h3>
           <span>Real</span>
@@ -2756,10 +2819,7 @@ function renderMessages() {
 
           <div className="focus-row">
             <strong>Selected Pitch</strong>
-            <span>
-              {selectedConversation?.pitches?.startup_name ||
-                "No conversation selected"}
-            </span>
+            <span>{selectedPitchName}</span>
           </div>
 
           <div className="focus-row">
@@ -2769,7 +2829,9 @@ function renderMessages() {
 
           <div className="focus-row">
             <strong>Privacy</strong>
-            <span>Only the founder and investor in the conversation can read it.</span>
+            <span>
+              Only the founder and investor in the conversation can read it.
+            </span>
           </div>
         </div>
       </div>
@@ -2777,43 +2839,43 @@ function renderMessages() {
   );
 }
 
-  function renderMainContent() {
-    switch (selectedSection) {
-      case "Profile":
-        return renderProfile();
+function renderMainContent() {
+  switch (selectedSection) {
+    case "Profile":
+      return renderProfile();
 
-      case "Pitches":
-        return isFounder ? renderPitches() : renderOverview();
+    case "Pitches":
+      return isFounder ? renderPitches() : renderOverview();
 
-      case "Watchlist":
-        return isInvestor ? renderWatchlist() : renderOverview();
+    case "Watchlist":
+      return isInvestor ? renderWatchlist() : renderOverview();
 
-      case "Investor Interest":
-        return isFounder ? renderInvestorInterest() : renderOverview();
+    case "Investor Interest":
+      return isFounder ? renderInvestorInterest() : renderOverview();
 
-        case "Messages":
-  return renderMessages();
+    case "Messages":
+      return renderMessages();
 
-      case "Deals":
-  return renderDeals();
+    case "Deals":
+      return renderDeals();
 
-      case "Analytics":
-  return renderAnalytics();
+    case "Analytics":
+      return renderAnalytics();
 
-      case "Verification":
-  return renderVerification();
+    case "Verification":
+      return renderVerification();
 
-case "Settings":
-  return renderSettings();
+    case "Settings":
+      return renderSettings();
 
-     case "Help Center":
-  return renderHelpCenter();
+    case "Help Center":
+      return renderHelpCenter();
 
-      case "Overview":
-      default:
-        return renderOverview();
-    }
+    case "Overview":
+    default:
+      return renderOverview();
   }
+}
 
   if (loadingSession) {
     return (
